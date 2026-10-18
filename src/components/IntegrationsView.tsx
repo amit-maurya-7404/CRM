@@ -35,11 +35,9 @@ export const IntegrationsView: React.FC = () => {
   const [isSimulating, setIsSimulating] = useState(false);
   const [simResult, setSimResult] = useState<{ success: boolean; message?: string } | null>(null);
 
-  const orgSlug = currentOrg?.slug || 'wanderlust-travel';
+  const orgSlug = currentOrg?.slug || 'workspace';
   const orgName = currentOrg?.name || 'Your Company';
-  const apiKey =
-    currentOrg?.apiKey ||
-    (currentOrg?._id === 'org_travel' ? 'zyn_live_travel_9a2b8e4f107c88d2e4a1' : `zyn_live_${currentOrg?._id || 'demo'}_key`);
+  const apiKey = currentOrg?.apiKey || 'zyn_live_api_key';
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
   // Embed URL

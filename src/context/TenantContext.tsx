@@ -55,50 +55,6 @@ interface TenantContextType {
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
-// Default Demo Users for Target Industries
-const DEMO_USERS: Record<string, User> = {
-  org_travel: {
-    _id: 'u_1',
-    orgId: 'org_travel',
-    name: 'Aarav Kapoor',
-    email: 'aarav@wanderlusttravel.com',
-    role: 'owner',
-    phone: '+919876543210',
-  },
-  org_gym: {
-    _id: 'u_2',
-    orgId: 'org_gym',
-    name: 'Sameer Joshi',
-    email: 'sameer@pulsefitgym.com',
-    role: 'owner',
-    phone: '+919811223344',
-  },
-  org_clinic: {
-    _id: 'u_3',
-    orgId: 'org_clinic',
-    name: 'Dr. Neha Singhal',
-    email: 'dr.neha@auracareclinic.com',
-    role: 'owner',
-    phone: '+919988776655',
-  },
-  org_restaurant: {
-    _id: 'u_4',
-    orgId: 'org_restaurant',
-    name: 'Vikas Oberoi',
-    email: 'vikas@royalbanquet.com',
-    role: 'owner',
-    phone: '+919123456780',
-  },
-  org_real_estate: {
-    _id: 'u_5',
-    orgId: 'org_real_estate',
-    name: 'Rohan Sharma',
-    email: 'rohan@apexrealty.in',
-    role: 'owner',
-    phone: '+919876500000',
-  },
-};
-
 export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
@@ -215,11 +171,12 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('zyntex_is_logged_out');
       }
 
-      const user = DEMO_USERS[org._id] || {
+      const adminEmail = org.adminEmail || org.ownerEmail || `admin@${org.slug}.com`;
+      const user: User = {
         _id: `u_${org._id}`,
         orgId: org._id,
         name: `${org.name} Admin`,
-        email: `admin@${org.slug}.com`,
+        email: adminEmail,
         role: 'owner' as UserRole,
         phone: '+919876543210',
       };
@@ -237,7 +194,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     if (trimmedEmail === 'owner@zyntex.com' || trimmedEmail === 'superadmin@zyntex.com' || trimmedEmail === 'admin@zyntex.com') {
       const superAdminUser: User = {
         _id: 'u_super_admin',
-        orgId: organizations[0]?._id || 'org_travel',
+        orgId: organizations[0]?._id || '',
         name: 'Zyntex Platform Owner',
         email: trimmedEmail,
         role: 'super_admin',
@@ -260,7 +217,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       return { success: true, organization: orgToUse || undefined, user: superAdminUser };
     }
 
-    // 1. Try real authentication endpoint
+    // 1. Authenticate against MongoDB via API
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
@@ -285,35 +242,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: json.error || 'Invalid email or password.' };
       }
     } catch (e) {
-      console.warn('API login error, falling back to local verification:', e);
+      console.warn('API login error:', e);
+      return { success: false, error: 'Network error connecting to CRM authentication service.' };
     }
-
-    // 2. Demo fallback if offline/mock - only match exact registered accounts
-    const demoUser = Object.values(DEMO_USERS).find((u) => u.email.toLowerCase() === trimmedEmail);
-    if (demoUser && (!password || password === 'password123')) {
-      const matchedOrg = organizations.find((o) => o._id === demoUser.orgId) || null;
-      if (matchedOrg) {
-        setCurrentOrg(matchedOrg);
-        setCurrentUser(demoUser);
-
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('active_org_id', matchedOrg._id);
-          localStorage.setItem('active_org_slug', matchedOrg.slug);
-          localStorage.setItem('active_user_data', JSON.stringify(demoUser));
-          localStorage.removeItem('zyntex_is_logged_out');
-        }
-        return { success: true, organization: matchedOrg, user: demoUser };
-      }
-    }
-
-    return { success: false, error: 'Invalid business email or password. Please verify your credentials.' };
   };
 
   const loginAsTenantCompany = (orgId: string) => {
     const org = organizations.find((o) => o._id === orgId || o.slug === orgId);
     if (!org) return false;
     const adminEmail = org.adminEmail || org.ownerEmail || `admin@${org.slug}.com`;
-    const user: User = DEMO_USERS[org._id] || {
+    const user: User = {
       _id: `u_${org._id}`,
       orgId: org._id,
       name: `${org.name} Admin`,
@@ -535,7 +473,15 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         setOrganizations((prev) => prev.filter((o) => o._id !== orgId));
         if (currentOrg?._id === orgId) {
           const remaining = organizations.filter((o) => o._id !== orgId);
-          if (remaining.length > 0) switchOrganization(remaining[0]._id);
+          if (remaining.length > 0) {
+            switchOrganization(remaining[0]._id);
+          } else {
+            setCurrentOrg(null);
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('active_org_id');
+              localStorage.removeItem('active_org_slug');
+            }
+          }
         }
         return true;
       }

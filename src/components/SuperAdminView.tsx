@@ -246,12 +246,8 @@ Please log in with the credentials above to launch your dedicated CRM workspace.
 
   // Handle Delete Org
   const handleDeleteOrg = async (org: Organization) => {
-    if (organizations.length <= 1) {
-      alert('Cannot delete the last remaining organization on the platform.');
-      return;
-    }
     const confirmed = confirm(
-      `⚠️ ARE YOU ABSOLUTELY SURE?\n\nThis will permanently delete "${org.name}" and all its isolated leads, bookings, and customer data.`
+      `⚠️ ARE YOU ABSOLUTELY SURE?\n\nThis will permanently delete "${org.name}" and all its isolated leads, bookings, and customer data from MongoDB.`
     );
     if (!confirmed) return;
 

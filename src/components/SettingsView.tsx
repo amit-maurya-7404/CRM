@@ -561,12 +561,12 @@ export const SettingsView: React.FC = () => {
   // =========================================================================
   // 3. PERSONAL SETTINGS (General)
   // =========================================================================
-  const [personalName, setPersonalName] = useState(currentUser?.name || 'Aarav Kapoor');
-  const [personalEmail, setPersonalEmail] = useState(currentUser?.email || 'aarav@wanderlusttravel.com');
-  const [personalPhone, setPersonalPhone] = useState(currentUser?.phone || '+91 9876543210');
+  const [personalName, setPersonalName] = useState(currentUser?.name || 'Administrator');
+  const [personalEmail, setPersonalEmail] = useState(currentUser?.email || '');
+  const [personalPhone, setPersonalPhone] = useState(currentUser?.phone || '');
   const [personalTimezone, setPersonalTimezone] = useState('Asia/Kolkata (IST)');
   const [personalSignature, setPersonalSignature] = useState(
-    `Warm regards,\n${currentUser?.name || 'Aarav Kapoor'}\n${currentOrg?.name || 'Wanderlust Holidays'}\nDirect: +91 9876543210`
+    `Warm regards,\n${currentUser?.name || 'Administrator'}\n${currentOrg?.name || 'Business Workspace'}`
   );
   const [personalSaveNotice, setPersonalSaveNotice] = useState(false);
 
@@ -597,7 +597,7 @@ export const SettingsView: React.FC = () => {
               </p>
             </div>
             <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">
-              {currentOrg?.name || 'Wanderlust Holidays'}
+              {currentOrg?.name || 'Business Workspace'}
             </span>
           </div>
 

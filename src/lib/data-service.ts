@@ -15,496 +15,26 @@ export function generateApiKey(prefix = 'zyn_live'): string {
   return `${prefix}_${random}`;
 }
 
-// Initial Companies Tailored for Target Industries
-const initialOrgs: Organization[] = [
-  // 1. TRAVEL COMPANY
-  {
-    _id: 'org_travel',
-    name: 'Wanderlust Holidays & Luxury Travel',
-    slug: 'wanderlust-travel',
-    industry: 'Travel & Tourism',
-    currency: 'INR',
-    currencySymbol: '₹',
-    apiKey: 'zyn_live_travel_9a2b8e4f107c88d2e4a1',
-    apiKeyCreatedAt: new Date().toISOString(),
-    ownerEmail: 'aarav@wanderlusttravel.com',
-    adminEmail: 'aarav@wanderlusttravel.com',
-    adminPassword: 'password123',
-    plan: 'enterprise',
-    status: 'active',
-    customFields: [
-      { id: 'tf_1', key: 'destination', label: 'Destination', type: 'select', options: ['Dubai 5N/6D', 'Bali Honeymoon', 'Europe Grand Tour', 'Maldives Luxury Villa', 'Ladakh Expedition', 'Goa Weekend'], required: true },
-      { id: 'tf_2', key: 'travelers_count', label: 'Travelers (Pax)', type: 'select', options: ['1 Solo', '2 Couple', '3-5 Family', '6+ Group'] },
-      { id: 'tf_3', key: 'travel_date', label: 'Tentative Travel Date', type: 'date' },
-      { id: 'tf_4', key: 'hotel_category', label: 'Hotel Category', type: 'select', options: ['3 Star Budget', '4 Star Premium', '5 Star Luxury Resort'] },
-    ],
-    modules: [
-      {
-        id: 'mod_itineraries',
-        name: 'Itineraries',
-        slug: 'itineraries',
-        icon: 'MapPin',
-        description: 'Custom tour itineraries, travel packages & day-by-day plans',
-        fields: [
-          { id: 'f_it_1', key: 'title', label: 'Itinerary Name', type: 'text', required: true },
-          { id: 'f_it_2', key: 'destination', label: 'Destination', type: 'text', required: true },
-          { id: 'f_it_3', key: 'duration', label: 'Duration', type: 'text' },
-          { id: 'f_it_4', key: 'pax', label: 'Travelers (Pax)', type: 'number' },
-          { id: 'f_it_5', key: 'package_cost', label: 'Total Cost (₹)', type: 'number' },
-          { id: 'f_it_6', key: 'status', label: 'Status', type: 'select', options: ['Draft', 'Shared with Client', 'Approved', 'Booked'] },
-        ],
-        records: [
-          {
-            _id: 'rec_it_1',
-            title: '7N/8Days Jawai Jodhpur Jaisalmer Jaipur',
-            destination: 'Rajasthan Circuit',
-            duration: '7N / 8D',
-            pax: 2,
-            package_cost: 195000,
-            status: 'Approved',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: 'rec_it_2',
-            title: '5N/6D Dubai Luxury Burj & Desert Safari',
-            destination: 'Dubai, UAE',
-            duration: '5N / 6D',
-            pax: 4,
-            package_cost: 480000,
-            status: 'Shared with Client',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: 'rec_it_3',
-            title: '9N/10D Ladakh Biking & Pangong Tso Tour',
-            destination: 'Leh Ladakh',
-            duration: '9N / 10D',
-            pax: 6,
-            package_cost: 240000,
-            status: 'Booked',
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-      {
-        id: 'mod_hotels',
-        name: 'Hotels',
-        slug: 'hotels',
-        icon: 'Building',
-        description: 'Partner luxury hotels, desert camps and heritage resorts',
-        fields: [
-          { id: 'f_h_1', key: 'hotel_name', label: 'Hotel Name', type: 'text', required: true },
-          { id: 'f_h_2', key: 'city', label: 'City / Location', type: 'text', required: true },
-          { id: 'f_h_3', key: 'category', label: 'Category', type: 'select', options: ['5 Star Luxury', '4 Star Premium', 'Heritage Haveli', 'Boutique Resort'] },
-          { id: 'f_h_4', key: 'room_type', label: 'Room Category', type: 'text' },
-          { id: 'f_h_5', key: 'cost_per_night', label: 'Cost / Night (₹)', type: 'number' },
-          { id: 'f_h_6', key: 'contact_phone', label: 'Front Desk Phone', type: 'text' },
-        ],
-        records: [
-          {
-            _id: 'rec_h_1',
-            hotel_name: 'Welcomhotel by ITC Jodhpur',
-            city: 'Jodhpur',
-            category: '5 Star Luxury',
-            room_type: 'Club Room with Breakfast',
-            cost_per_night: 14500,
-            contact_phone: '+91 291 222 3400',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: 'rec_h_2',
-            hotel_name: 'Suryagarh Jaisalmer Palace',
-            city: 'Jaisalmer',
-            category: 'Heritage Haveli',
-            room_type: 'Fort View Suite',
-            cost_per_night: 22000,
-            contact_phone: '+91 299 226 9269',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: 'rec_h_3',
-            hotel_name: 'Atlantis The Palm Dubai',
-            city: 'Dubai',
-            category: '5 Star Luxury',
-            room_type: 'Ocean King Room',
-            cost_per_night: 38000,
-            contact_phone: '+971 4 426 2000',
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-      {
-        id: 'mod_vehicles',
-        name: 'Vehicles',
-        slug: 'vehicles',
-        icon: 'Car',
-        description: 'Fleet transport, Innova Crysta, Tempo Travellers & drivers',
-        fields: [
-          { id: 'f_v_1', key: 'vehicle_name', label: 'Vehicle Name', type: 'text', required: true },
-          { id: 'f_v_2', key: 'vehicle_type', label: 'Category', type: 'select', options: ['SUV', 'Sedan', 'Tempo Traveller 12S', 'Luxury Van'] },
-          { id: 'f_v_3', key: 'capacity', label: 'Seating Capacity', type: 'text' },
-          { id: 'f_v_4', key: 'daily_rate', label: 'Daily Rate (₹)', type: 'number' },
-          { id: 'f_v_5', key: 'driver_name', label: 'Driver / Vendor Name', type: 'text' },
-          { id: 'f_v_6', key: 'driver_phone', label: 'Driver Phone', type: 'text' },
-        ],
-        records: [
-          {
-            _id: 'rec_v_1',
-            vehicle_name: 'Toyota Innova Crysta (White)',
-            vehicle_type: 'SUV',
-            capacity: '6+1 Seater',
-            daily_rate: 4500,
-            driver_name: 'Rajender Singh',
-            driver_phone: '+91 98290 11223',
-            createdAt: new Date().toISOString(),
-          },
-          {
-            _id: 'rec_v_2',
-            vehicle_name: 'Force Tempo Traveller 12 Seater',
-            vehicle_type: 'Tempo Traveller 12S',
-            capacity: '12+1 Seater',
-            daily_rate: 7500,
-            driver_name: 'Kuldeep Choudhary',
-            driver_phone: '+91 94140 88990',
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-      {
-        id: 'mod_bookings',
-        name: 'Bookings',
-        slug: 'bookings',
-        icon: 'CalendarCheck',
-        description: 'Confirmed customer bookings, vouchers & payments',
-        fields: [
-          { id: 'f_b_1', key: 'booking_ref', label: 'Booking Ref', type: 'text', required: true },
-          { id: 'f_b_2', key: 'customer_name', label: 'Customer Name', type: 'text', required: true },
-          { id: 'f_b_3', key: 'itinerary', label: 'Package Booked', type: 'text' },
-          { id: 'f_b_4', key: 'travel_date', label: 'Travel Date', type: 'date' },
-          { id: 'f_b_5', key: 'total_amount', label: 'Total Amount (₹)', type: 'number' },
-          { id: 'f_b_6', key: 'advance_paid', label: 'Advance Paid (₹)', type: 'number' },
-          { id: 'f_b_7', key: 'status', label: 'Booking Status', type: 'select', options: ['Advance Received', 'Vouchers Issued', 'Trip Ongoing', 'Completed'] },
-        ],
-        records: [
-          {
-            _id: 'rec_b_1',
-            booking_ref: 'WND-2026-081',
-            customer_name: 'Kabir & Riya Malhotra',
-            itinerary: '7N/8Days Jawai Jodhpur Jaisalmer Jaipur',
-            travel_date: '2026-10-25',
-            total_amount: 195000,
-            advance_paid: 75000,
-            status: 'Advance Received',
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      },
-    ],
-    whatsappTemplate: 'Hi {{name}}, greetings from Wanderlust Holidays! Regarding your trip inquiry for {{destination}} for {{travelers_count}} travelers, we have crafted a custom itinerary. Would you like to review the flight & hotel options?',
-    createdAt: new Date().toISOString(),
-  },
-  // 2. GYM & FITNESS CENTER
-  {
-    _id: 'org_gym',
-    name: 'PulseFit 24/7 Health & Gym',
-    slug: 'pulsefit-gym',
-    industry: 'Gym & Fitness',
-    currency: 'INR',
-    currencySymbol: '₹',
-    apiKey: 'zyn_live_gym_7d3c1a8e950b44a2c1d3',
-    apiKeyCreatedAt: new Date().toISOString(),
-    ownerEmail: 'sameer@pulsefitgym.com',
-    adminEmail: 'sameer@pulsefitgym.com',
-    adminPassword: 'password123',
-    plan: 'professional',
-    status: 'active',
-    customFields: [
-      { id: 'gf_1', key: 'membership_plan', label: 'Membership Plan', type: 'select', options: ['1 Month Pass', '3 Months Muscle Build', 'Annual VIP Pass', 'Personal Training + Diet Plan'], required: true },
-      { id: 'gf_2', key: 'fitness_goal', label: 'Fitness Goal', type: 'select', options: ['Fat Loss / Weight Loss', 'Muscle Hypertrophy', 'CrossFit & Stamina', 'General Wellness'] },
-      { id: 'gf_3', key: 'preferred_batch', label: 'Preferred Batch', type: 'select', options: ['Morning (6:00 AM - 9:00 AM)', 'Afternoon (12:00 PM - 4:00 PM)', 'Evening (5:00 PM - 10:00 PM)'] },
-      { id: 'gf_4', key: 'trial_date', label: 'Trial Session Date', type: 'date' },
-    ],
-    whatsappTemplate: 'Hey {{name}}! Welcome to PulseFit Gym. Your free 1-day workout trial & body analysis test is confirmed. Which batch timing (Morning or Evening) works best for you today?',
-    createdAt: new Date().toISOString(),
-  },
-  // 3. CLINICS & HEALTHCARE
-  {
-    _id: 'org_clinic',
-    name: 'AuraCare Dental & Polyclinic',
-    slug: 'auracare-clinic',
-    industry: 'Clinics & Healthcare',
-    currency: 'INR',
-    currencySymbol: '₹',
-    apiKey: 'zyn_live_clinic_5f8b2c4e116a88b3f2e1',
-    apiKeyCreatedAt: new Date().toISOString(),
-    ownerEmail: 'dr.neha@auracareclinic.com',
-    adminEmail: 'dr.neha@auracareclinic.com',
-    adminPassword: 'password123',
-    plan: 'professional',
-    status: 'active',
-    customFields: [
-      { id: 'cf_1', key: 'treatment_required', label: 'Treatment Required', type: 'select', options: ['Invisalign / Clear Aligners', 'Root Canal & Ceramic Crown', 'Dental Implants', 'Teeth Whitening', 'General Medical Consultation'], required: true },
-      { id: 'cf_2', key: 'doctor_assigned', label: 'Consultant Doctor', type: 'select', options: ['Dr. Neha Singhal (Orthodontist)', 'Dr. Rahul Nair (Implantologist)', 'Dr. Ajay Verma (Physician)'] },
-      { id: 'cf_3', key: 'appointment_date', label: 'Appointment Date', type: 'date' },
-      { id: 'cf_4', key: 'patient_age', label: 'Patient Age', type: 'number' },
-    ],
-    whatsappTemplate: 'Hello {{name}}, this is AuraCare Clinic. Your appointment request for {{treatment_required}} with {{doctor_assigned}} has been received. Please confirm if 4:30 PM works for you.',
-    createdAt: new Date().toISOString(),
-  },
-  // 4. RESTAURANT & BANQUET
-  {
-    _id: 'org_restaurant',
-    name: 'The Royal Grand Banquet & Bistro',
-    slug: 'royal-banquet',
-    industry: 'Restaurant & Banquets',
-    currency: 'INR',
-    currencySymbol: '₹',
-    apiKey: 'zyn_live_dining_3e9d8a1c774f22c1b9a8',
-    apiKeyCreatedAt: new Date().toISOString(),
-    ownerEmail: 'vikas@royalbanquet.com',
-    adminEmail: 'vikas@royalbanquet.com',
-    adminPassword: 'password123',
-    plan: 'starter',
-    status: 'active',
-    customFields: [
-      { id: 'rf_1', key: 'event_type', label: 'Event Type', type: 'select', options: ['Wedding Reception', 'Birthday / Anniversary Party', 'Corporate Gala Dinner', 'Private Family Buffet'], required: true },
-      { id: 'rf_2', key: 'guest_count', label: 'Expected Guests (Pax)', type: 'select', options: ['25-50 Pax', '50-100 Pax', '100-250 Pax', '250-500 Pax', '500+ Pax'] },
-      { id: 'rf_3', key: 'event_date', label: 'Event Date', type: 'date' },
-      { id: 'rf_4', key: 'catering_type', label: 'Menu Spread', type: 'select', options: ['Pure Veg Royal Buffet', 'Gourmet Non-Veg & Seafood', 'Live BBQ & Cocktail Bar'] },
-    ],
-    whatsappTemplate: 'Hi {{name}}, congratulations on your upcoming {{event_type}}! The Royal Grand Banquet has hall availability for {{guest_count}} guests. When can we schedule your food tasting session?',
-    createdAt: new Date().toISOString(),
-  },
-  // 5. REAL ESTATE (BONUS)
-  {
-    _id: 'org_real_estate',
-    name: 'Apex Realty & Living',
-    slug: 'apex-realty',
-    industry: 'Real Estate & Properties',
-    currency: 'INR',
-    currencySymbol: '₹',
-    apiKey: 'zyn_live_realty_4b1a7d9c663e55f8a0b1',
-    apiKeyCreatedAt: new Date().toISOString(),
-    ownerEmail: 'rohan@apexrealty.in',
-    adminEmail: 'rohan@apexrealty.in',
-    adminPassword: 'password123',
-    plan: 'enterprise',
-    status: 'active',
-    customFields: [
-      { id: 'f1', key: 'property_type', label: 'Property Type', type: 'select', options: ['2 BHK Luxury', '3 BHK Penthouse', 'Commercial Office', 'Plot / Villa'], required: true },
-      { id: 'f2', key: 'budget_range', label: 'Budget Range', type: 'select', options: ['₹40L - ₹75L', '₹75L - ₹1.5 Cr', '₹1.5 Cr - ₹3 Cr', '₹3 Cr+'] },
-      { id: 'f3', key: 'preferred_location', label: 'Preferred Location', type: 'text' },
-    ],
-    whatsappTemplate: 'Hi {{name}}, greetings from Apex Realty! Regarding your interest in {{property_type}}, when is a good time for a site visit this week?',
-    createdAt: new Date().toISOString(),
-  },
-];
+// Clean state: No hardcoded dummy organizations, users, or leads.
+// All business workspaces and accounts are created dynamically via Super Admin and persisted directly in MongoDB Atlas.
+const initialOrgs: Organization[] = [];
 
 const initialUsers: User[] = [
-  { _id: 'u_super_admin', orgId: 'org_travel', name: 'Zyntex Platform Owner', email: 'owner@zyntex.com', role: 'super_admin', isPlatformOwner: true, phone: '+919876500001', password: 'password123' },
-  { _id: 'u_1', orgId: 'org_travel', name: 'Aarav Kapoor', email: 'aarav@wanderlusttravel.com', role: 'owner', phone: '+919876543210', password: 'password123' },
-  { _id: 'u_2', orgId: 'org_gym', name: 'Sameer Joshi', email: 'sameer@pulsefitgym.com', role: 'owner', phone: '+919811223344', password: 'password123' },
-  { _id: 'u_3', orgId: 'org_clinic', name: 'Dr. Neha Singhal', email: 'dr.neha@auracareclinic.com', role: 'owner', phone: '+919988776655', password: 'password123' },
-  { _id: 'u_4', orgId: 'org_restaurant', name: 'Vikas Oberoi', email: 'vikas@royalbanquet.com', role: 'owner', phone: '+919123456780', password: 'password123' },
-  { _id: 'u_5', orgId: 'org_real_estate', name: 'Rohan Sharma', email: 'rohan@apexrealty.in', role: 'owner', phone: '+919876500000', password: 'password123' },
-];
-
-const initialLeads: Lead[] = [
-  // Travel leads
   {
-    _id: 'lead_t1',
-    orgId: 'org_travel',
-    name: 'Kabir & Riya Malhotra',
-    company: 'Honeymoon Trip',
-    phone: '9876543210',
-    email: 'kabir.m@gmail.com',
-    value: 195000,
-    stage: 'meeting',
-    priority: 'urgent',
-    source: 'instagram',
-    assignedTo: { _id: 'u_1', name: 'Aarav Kapoor' },
-    customFields: { destination: 'Bali Honeymoon', travelers_count: '2 Couple', hotel_category: '5 Star Luxury Resort' },
-    nextFollowUp: new Date(Date.now() + 86400000).toISOString(),
-    notesCount: 2,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'lead_t2',
-    orgId: 'org_travel',
-    name: 'Mehta Family',
-    company: 'Family Vacation',
-    phone: '9820011223',
-    email: 'sanjay.mehta@yahoo.com',
-    value: 480000,
-    stage: 'proposal',
-    priority: 'high',
-    source: 'website',
-    assignedTo: { _id: 'u_1', name: 'Aarav Kapoor' },
-    customFields: { destination: 'Dubai 5N/6D', travelers_count: '3-5 Family', hotel_category: '4 Star Premium' },
-    nextFollowUp: new Date(Date.now() + 43200000).toISOString(),
-    notesCount: 3,
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'lead_t3',
-    orgId: 'org_travel',
-    name: 'Ankit Aggarwal',
-    company: 'Biking Group',
-    phone: '9910293847',
-    email: 'ankit.biker@gmail.com',
-    value: 240000,
-    stage: 'won',
-    priority: 'medium',
-    source: 'referral',
-    assignedTo: { _id: 'u_1', name: 'Aarav Kapoor' },
-    customFields: { destination: 'Ladakh Expedition', travelers_count: '6+ Group', hotel_category: '3 Star Budget' },
-    notesCount: 1,
-    createdAt: new Date(Date.now() - 604800000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-
-  // Gym leads
-  {
-    _id: 'lead_g1',
-    orgId: 'org_gym',
-    name: 'Rohit Deshmukh',
-    company: 'Software Engineer',
-    phone: '9898012345',
-    email: 'rohit.d@techcorp.com',
-    value: 28000,
-    stage: 'contacted',
-    priority: 'high',
-    source: 'facebook',
-    assignedTo: { _id: 'u_2', name: 'Sameer Joshi' },
-    customFields: { membership_plan: 'Annual VIP Pass', fitness_goal: 'Fat Loss / Weight Loss', preferred_batch: 'Evening (5:00 PM - 10:00 PM)' },
-    nextFollowUp: new Date(Date.now() + 86400000).toISOString(),
-    notesCount: 1,
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'lead_g2',
-    orgId: 'org_gym',
-    name: 'Pooja Hegde',
-    phone: '9744112233',
-    email: 'pooja.fit@gmail.com',
-    value: 45000,
-    stage: 'meeting',
-    priority: 'urgent',
-    source: 'instagram',
-    assignedTo: { _id: 'u_2', name: 'Sameer Joshi' },
-    customFields: { membership_plan: 'Personal Training + Diet Plan', fitness_goal: 'Muscle Hypertrophy', preferred_batch: 'Morning (6:00 AM - 9:00 AM)' },
-    nextFollowUp: new Date(Date.now() + 43200000).toISOString(),
-    notesCount: 2,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-
-  // Clinic leads
-  {
-    _id: 'lead_c1',
-    orgId: 'org_clinic',
-    name: 'Sanya Mirza',
-    phone: '9810192837',
-    email: 'sanya.smile@gmail.com',
-    value: 125000,
-    stage: 'proposal',
-    priority: 'urgent',
-    source: 'website',
-    assignedTo: { _id: 'u_3', name: 'Dr. Neha Singhal' },
-    customFields: { treatment_required: 'Invisalign / Clear Aligners', doctor_assigned: 'Dr. Neha Singhal (Orthodontist)', patient_age: 26 },
-    nextFollowUp: new Date(Date.now() + 43200000).toISOString(),
-    notesCount: 3,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'lead_c2',
-    orgId: 'org_clinic',
-    name: 'Harish Chandra',
-    phone: '9848011223',
-    email: 'harish.c@gmail.com',
-    value: 65000,
-    stage: 'won',
-    priority: 'high',
-    source: 'referral',
-    assignedTo: { _id: 'u_3', name: 'Dr. Neha Singhal' },
-    customFields: { treatment_required: 'Dental Implants', doctor_assigned: 'Dr. Rahul Nair (Implantologist)', patient_age: 58 },
-    notesCount: 2,
-    createdAt: new Date(Date.now() - 345600000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-
-  // Restaurant & Banquet leads
-  {
-    _id: 'lead_r1',
-    orgId: 'org_restaurant',
-    name: 'Sunil & Sunita Goel',
-    company: 'Daughter Wedding',
-    phone: '9711002233',
-    email: 'sunilgoel@gmail.com',
-    value: 650000,
-    stage: 'meeting',
-    priority: 'urgent',
-    source: 'referral',
-    assignedTo: { _id: 'u_4', name: 'Vikas Oberoi' },
-    customFields: { event_type: 'Wedding Reception', guest_count: '250-500 Pax', catering_type: 'Gourmet Non-Veg & Seafood' },
-    nextFollowUp: new Date(Date.now() + 86400000).toISOString(),
-    notesCount: 4,
-    createdAt: new Date(Date.now() - 259200000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    _id: 'lead_r2',
-    orgId: 'org_restaurant',
-    name: 'Zomato Regional Team',
-    company: 'Corporate Meet',
-    phone: '9811223344',
-    email: 'events@zomato.com',
-    value: 180000,
-    stage: 'proposal',
-    priority: 'high',
-    source: 'website',
-    assignedTo: { _id: 'u_4', name: 'Vikas Oberoi' },
-    customFields: { event_type: 'Corporate Gala Dinner', guest_count: '50-100 Pax', catering_type: 'Live BBQ & Cocktail Bar' },
-    nextFollowUp: new Date(Date.now() + 43200000).toISOString(),
-    notesCount: 2,
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date().toISOString(),
+    _id: 'u_super_admin',
+    orgId: '',
+    name: 'Zyntex Platform Owner',
+    email: 'owner@zyntex.com',
+    role: 'super_admin',
+    isPlatformOwner: true,
+    phone: '+919876500001',
+    password: 'password123',
   },
 ];
 
-const initialActivities: Activity[] = [
-  {
-    _id: 'act_1',
-    orgId: 'org_travel',
-    leadId: 'lead_t1',
-    user: { _id: 'u_1', name: 'Aarav Kapoor' },
-    type: 'whatsapp',
-    content: 'Sent Bali Seminyak Private Pool Villa itinerary with candlelight dinner option.',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-  {
-    _id: 'act_2',
-    orgId: 'org_gym',
-    leadId: 'lead_g1',
-    user: { _id: 'u_2', name: 'Sameer Joshi' },
-    type: 'call',
-    content: 'Client attended trial session. Interested in 1-year VIP pass. Follow-up tomorrow after salary date.',
-    createdAt: new Date(Date.now() - 43200000).toISOString(),
-  },
-  {
-    _id: 'act_3',
-    orgId: 'org_clinic',
-    leadId: 'lead_c1',
-    user: { _id: 'u_3', name: 'Dr. Neha Singhal' },
-    type: 'meeting',
-    content: '3D intraoral scan completed. Invisalign plan of 18 aligners explained to patient.',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
+const initialLeads: Lead[] = [];
+
+const initialActivities: Activity[] = [];
 
 // Helper to generate industry-specific CRM custom fields for new business registrations
 export function getIndustryDefaultFields(industry: string): CustomFieldDefinition[] {
@@ -564,35 +94,12 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        const orgs = await OrganizationModel.find({}).lean();
-        if (orgs && orgs.length >= initialOrgs.length) {
-          return orgs.map((o) => {
-            let modules = o.modules;
-            if (!modules || modules.length === 0) {
-              const defaultOrg = initialOrgs.find((io) => io.slug === o.slug);
-              modules = defaultOrg?.modules || [];
-            }
-            return { ...o, _id: o._id.toString(), modules } as unknown as Organization;
-          });
-        }
-        
-        // Seed if missing target industries
-        for (const org of initialOrgs) {
-          await OrganizationModel.findOneAndUpdate(
-            { slug: org.slug },
-            { $set: org },
-            { upsert: true, new: true }
-          );
-        }
-        const updated = await OrganizationModel.find({}).lean();
-        return updated.map((o) => {
-          let modules = o.modules;
-          if (!modules || modules.length === 0) {
-            const defaultOrg = initialOrgs.find((io) => io.slug === o.slug);
-            modules = defaultOrg?.modules || [];
-          }
-          return { ...o, _id: o._id.toString(), modules } as unknown as Organization;
-        });
+        const orgs = await OrganizationModel.find({}).sort({ createdAt: -1 }).lean();
+        return (orgs || []).map((o) => ({
+          ...o,
+          _id: o._id.toString(),
+          modules: o.modules || [],
+        })) as unknown as Organization[];
       } catch (err) {
         console.error('Error fetching orgs from MongoDB:', err);
       }
@@ -606,22 +113,13 @@ export const DataService = {
       try {
         const org = await OrganizationModel.findOne({ $or: [{ _id: id }, { slug: id }] } as any).lean();
         if (org) {
-          let modules = org.modules;
-          if (!modules || modules.length === 0) {
-            const defaultOrg = initialOrgs.find((io) => io.slug === org.slug);
-            modules = defaultOrg?.modules || [];
-          }
-          return { ...org, _id: org._id.toString(), modules } as unknown as Organization;
+          return { ...org, _id: org._id.toString(), modules: org.modules || [] } as unknown as Organization;
         }
       } catch {
         // Fallback
       }
     }
-    const memOrg = mockOrgs.find((o) => o._id === id || o.slug === id) || mockOrgs[0] || null;
-    if (memOrg && (!memOrg.modules || memOrg.modules.length === 0)) {
-      const defaultOrg = initialOrgs.find((io) => io.slug === memOrg.slug);
-      memOrg.modules = defaultOrg?.modules || [];
-    }
+    const memOrg = mockOrgs.find((o) => o._id === id || o.slug === id) || null;
     return memOrg;
   },
 
@@ -839,6 +337,25 @@ export const DataService = {
   ): Promise<{ success: boolean; user?: User; org?: Organization; error?: string }> {
     const normalizedEmail = email.trim().toLowerCase();
 
+    // 0. Super Admin / Platform Owner Master Login
+    if (normalizedEmail === 'owner@zyntex.com' || normalizedEmail === 'superadmin@zyntex.com') {
+      const superAdminUser: User = {
+        _id: 'u_super_admin',
+        orgId: '',
+        name: 'Zyntex Platform Owner',
+        email: normalizedEmail,
+        role: 'super_admin',
+        isPlatformOwner: true,
+        phone: '+919876500001',
+      };
+      const allOrgs = await this.getOrganizations();
+      return {
+        success: true,
+        user: superAdminUser,
+        org: allOrgs[0] || undefined,
+      };
+    }
+
     // 1. Try finding user in MongoDB or mock
     let matchedUser = await this.getUserByEmail(normalizedEmail);
     let matchedOrg: Organization | null = null;
@@ -962,14 +479,7 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        // Seed initial leads if empty for this org
-        const count = await LeadModel.countDocuments({ orgId });
-        if (count === 0) {
-          const orgInitialLeads = initialLeads.filter((l) => l.orgId === orgId);
-          if (orgInitialLeads.length > 0) {
-            await LeadModel.insertMany(orgInitialLeads);
-          }
-        }
+        // No dummy leads seeding
 
         const query: any = { orgId };
         if (filters?.stage && filters.stage !== 'all') query.stage = filters.stage;

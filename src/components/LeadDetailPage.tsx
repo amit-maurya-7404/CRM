@@ -373,9 +373,7 @@ export const LeadDetailPage: React.FC<LeadDetailPageProps> = ({
   const handleLaunchWhatsApp = () => {
     const cleanPhone = (currentLead.phone || '').replace(/[^0-9]/g, '');
     const finalPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const msg = `Hi ${currentLead.name}, greetings from ${currentOrg?.name || 'Wanderlust Holidays'}! We have reviewed your trip inquiry for ${
-      currentLead.customFields?.destination || 'Rajasthan'
-    }. Would you like to review the hotel quotation and itinerary?`;
+    const msg = `Hi ${currentLead.name}, greetings from ${currentOrg?.name || 'our team'}! How can we assist you with your inquiry today?`;
     window.open(`https://wa.me/${finalPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 

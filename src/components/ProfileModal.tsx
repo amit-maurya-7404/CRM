@@ -64,9 +64,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   if (!isOpen || !currentUser) return null;
 
-  const currentApiKey =
-    currentOrg?.apiKey ||
-    (currentOrg?._id === 'org_travel' ? 'zyn_live_travel_9a2b8e4f107c88d2e4a1' : `zyn_live_${currentOrg?._id || 'demo'}_key`);
+  const currentApiKey = currentOrg?.apiKey || 'zyn_live_api_key';
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   const apiEndpoint = `${baseUrl}/api/v1/capture-lead`;

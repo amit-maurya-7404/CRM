@@ -16,19 +16,25 @@ if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
+// Fallback to production Atlas URI ensures persistence across all Vercel deployments
+const FALLBACK_MONGODB_URI =
+  'mongodb+srv://zyntextechh_db_user:xgnVxzJbCZgkpy55@cluster0.qycbrzd.mongodb.net/zyntex_crm?retryWrites=true&w=majority';
+
 export async function connectToDatabase(): Promise<typeof mongoose | null> {
-  const uri = process.env.MONGODB_URI;
+  const uri = process.env.MONGODB_URI || FALLBACK_MONGODB_URI;
   if (!uri) {
     return null;
   }
 
-  if (cached.conn) {
+  if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
     };
 
     cached.promise = mongoose.connect(uri, opts).then((m) => {
@@ -41,6 +47,7 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    cached.conn = null;
     console.error('MongoDB connection error:', e);
     return null;
   }
@@ -49,5 +56,5 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
 }
 
 export const isMongoConfigured = (): boolean => {
-  return Boolean(process.env.MONGODB_URI);
+  return true;
 };
