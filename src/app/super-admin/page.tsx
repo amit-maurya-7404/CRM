@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 function SuperAdminConsole() {
-  const { currentOrg, loginAsTenantCompany, organizations } = useTenant();
+  const { currentOrg, loginAsTenantCompany, organizations, refreshOrganizations } = useTenant();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authKey, setAuthKey] = useState<string>('');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -30,7 +30,9 @@ function SuperAdminConsole() {
         setIsAuthenticated(true);
       }
     }
-  }, []);
+    // Always refresh organizations on mount to guarantee fresh MongoDB Atlas state
+    refreshOrganizations();
+  }, [refreshOrganizations]);
 
   const handleUnlockConsole = (e: React.FormEvent) => {
     e.preventDefault();
@@ -209,9 +211,5 @@ function SuperAdminConsole() {
 }
 
 export default function SuperAdminPage() {
-  return (
-    <TenantProvider>
-      <SuperAdminConsole />
-    </TenantProvider>
-  );
+  return <SuperAdminConsole />;
 }

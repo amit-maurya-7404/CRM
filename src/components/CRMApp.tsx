@@ -74,9 +74,16 @@ export function CRMApp({ targetOrgSlug }: CRMAppProps) {
       setIsLoadingLeads(true);
       const url = new URL('/api/leads', window.location.origin);
       url.searchParams.set('orgId', currentOrg._id);
+      url.searchParams.set('_t', Date.now().toString());
       if (searchQuery) url.searchParams.set('search', searchQuery);
 
-      const res = await fetch(url.toString());
+      const res = await fetch(url.toString(), {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       const json = await res.json();
       if (json.success) {
         setLeads(json.data);
@@ -92,7 +99,13 @@ export function CRMApp({ targetOrgSlug }: CRMAppProps) {
   const fetchStats = useCallback(async () => {
     if (!currentOrg || !currentUser) return;
     try {
-      const res = await fetch(`/api/stats?orgId=${currentOrg._id}`);
+      const res = await fetch(`/api/stats?orgId=${currentOrg._id}&_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       const json = await res.json();
       if (json.success) {
         setStats(json.data);

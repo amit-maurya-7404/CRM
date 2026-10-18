@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { DataService } from '@/lib/data-service';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Allow any external website (WordPress, Shopify, Webflow, Custom HTML) to post leads via CORS
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

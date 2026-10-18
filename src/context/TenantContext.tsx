@@ -56,10 +56,37 @@ interface TenantContextType {
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
 
 export function TenantProvider({ children }: { children: React.ReactNode }) {
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('zyntex_organizations_cache');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch {}
+    }
+    return [];
+  });
   const [currentOrg, setCurrentOrg] = useState<Organization | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Synchronized state and localStorage updater for organizations
+  const updateOrganizationsState = useCallback(
+    (updater: Organization[] | ((prev: Organization[]) => Organization[])) => {
+      setOrganizations((prev) => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('zyntex_organizations_cache', JSON.stringify(next));
+          } catch {}
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   // Helper to change current organization by slug or id and persist
   const setCurrentOrgBySlug = useCallback((slugOrId: string): Organization | null => {
@@ -79,19 +106,20 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/organizations');
+      const res = await fetch(`/api/organizations?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       const json = await res.json();
-      if (json.success && json.data.length > 0) {
+      if (json.success && Array.isArray(json.data)) {
         const orgsList: Organization[] = json.data;
-        setOrganizations(orgsList);
+        updateOrganizationsState(orgsList);
 
         // Check if user has explicitly logged out
         const isLoggedOut = typeof window !== 'undefined' ? localStorage.getItem('zyntex_is_logged_out') : null;
-
-        if (isLoggedOut === 'true') {
-          setCurrentUser(null);
-          return;
-        }
 
         // Check path slug from URL (e.g., /travel-tribes)
         let pathSlug: string | null = null;
@@ -100,6 +128,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           if (pathSegments.length > 0 && !['super-admin', 'admin', 'api', 'embed'].includes(pathSegments[0])) {
             pathSlug = pathSegments[0];
           }
+        }
+
+        const pathOrg = pathSlug ? orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug) : null;
+
+        if (isLoggedOut === 'true') {
+          setCurrentUser(null);
+          if (pathOrg) {
+            setCurrentOrg(pathOrg);
+          }
+          return;
         }
 
         // Check saved user session and saved active org
@@ -118,10 +156,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
             // 3. Saved active org id
             // 4. User's assigned orgId or org slug
             const matchedOrg =
-              (pathSlug ? orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug) : null) ||
+              pathOrg ||
               (savedOrgSlug ? orgsList.find((o) => o.slug === savedOrgSlug) : null) ||
               (savedOrgId ? orgsList.find((o) => o._id === savedOrgId) : null) ||
               orgsList.find((o) => o._id === parsedUser.orgId || o.slug === parsedUser.orgId) ||
+              orgsList[0] ||
               null;
 
             if (matchedOrg) {
@@ -130,22 +169,17 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
                 localStorage.setItem('active_org_id', matchedOrg._id);
                 localStorage.setItem('active_org_slug', matchedOrg.slug);
               }
-            } else if (pathSlug) {
-              const pathOrg = orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug);
-              if (pathOrg) {
-                setCurrentOrg(pathOrg);
-              }
             }
           } catch {
             setCurrentUser(null);
           }
         } else {
           // No active user session
-          if (pathSlug) {
-            const pathOrg = orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug);
-            if (pathOrg) {
-              setCurrentOrg(pathOrg);
-            }
+          if (pathOrg) {
+            setCurrentOrg(pathOrg);
+          } else if (savedOrgSlug) {
+            const sOrg = orgsList.find((o) => o.slug === savedOrgSlug);
+            if (sOrg) setCurrentOrg(sOrg);
           }
           setCurrentUser(null);
         }
@@ -155,7 +189,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [updateOrganizationsState]);
 
   useEffect(() => {
     fetchOrganizations();
@@ -367,7 +401,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         }),
       });
       const json = await res.json();
-      if (json.success) {
+      if (json.success && json.data) {
+        updateOrganizationsState((prev) => [json.data, ...prev.filter((o) => o._id !== json.data._id)]);
         await fetchOrganizations();
         switchOrganization(json.data._id);
         return json.data;
@@ -390,7 +425,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       const json = await res.json();
       if (json.success) {
         setCurrentOrg(json.data);
-        setOrganizations((prev) =>
+        updateOrganizationsState((prev) =>
           prev.map((o) => (o._id === json.data._id ? json.data : o))
         );
         return true;
@@ -426,10 +461,17 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       });
       const json = await res.json();
       if (json.success && json.data) {
+        const createdOrg = json.data.organization;
+        // Immediately persist to local state and localStorage cache so it never vanishes on refresh
+        updateOrganizationsState((prev) => {
+          const filtered = prev.filter((o) => o._id !== createdOrg._id && o.slug !== createdOrg.slug);
+          return [createdOrg, ...filtered];
+        });
+
         await fetchOrganizations();
         return {
           success: true,
-          organization: json.data.organization,
+          organization: createdOrg,
           user: json.data.user,
         };
       }
@@ -449,7 +491,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       });
       const json = await res.json();
       if (json.success) {
-        setOrganizations((prev) =>
+        updateOrganizationsState((prev) =>
           prev.map((o) => (o._id === orgId ? { ...o, status } : o))
         );
         if (currentOrg?._id === orgId) {
@@ -470,7 +512,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       });
       const json = await res.json();
       if (json.success) {
-        setOrganizations((prev) => prev.filter((o) => o._id !== orgId));
+        updateOrganizationsState((prev) => prev.filter((o) => o._id !== orgId));
         if (currentOrg?._id === orgId) {
           const remaining = organizations.filter((o) => o._id !== orgId);
           if (remaining.length > 0) {
@@ -500,7 +542,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       });
       const json = await res.json();
       if (json.success) {
-        setOrganizations((prev) =>
+        updateOrganizationsState((prev) =>
           prev.map((o) => (o._id === orgId ? json.data : o))
         );
         if (currentOrg?._id === orgId) {

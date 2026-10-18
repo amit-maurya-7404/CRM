@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import { DataService } from '@/lib/data-service';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const noCacheHeaders = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -9,7 +18,7 @@ export async function POST(req: Request) {
     if (!email) {
       return NextResponse.json(
         { success: false, error: 'Email address is required.' },
-        { status: 400 }
+        { status: 400, headers: noCacheHeaders }
       );
     }
 
@@ -17,22 +26,25 @@ export async function POST(req: Request) {
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error || 'Invalid email or password.' },
-        { status: 401 }
+        { status: 401, headers: noCacheHeaders }
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        user: result.user,
-        organization: result.org,
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          user: result.user,
+          organization: result.org,
+        },
       },
-    });
+      { headers: noCacheHeaders }
+    );
   } catch (error: any) {
     console.error('Login error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Internal server error during login.' },
-      { status: 500 }
+      { status: 500, headers: noCacheHeaders }
     );
   }
 }

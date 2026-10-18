@@ -199,14 +199,27 @@ export const DataService = {
       { id: 'f_b_7', key: 'status', label: 'Booking Status', type: 'select', options: ['Advance Received', 'Confirmed', 'Completed'] },
     ];
 
-    const cleanSlug = (data.slug || data.name || 'new-org')
+    let cleanSlug = (data.slug || data.name || 'new-org')
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || `org-${Date.now()}`;
 
+    const mongo = await connectToDatabase();
+    if (mongo) {
+      // Ensure slug uniqueness in MongoDB to prevent duplicate key errors (E11000)
+      let candidate = cleanSlug;
+      let suffix = 1;
+      while (await OrganizationModel.findOne({ slug: candidate })) {
+        candidate = `${cleanSlug}-${suffix}`;
+        suffix++;
+      }
+      cleanSlug = candidate;
+    }
+
+    const uniqueId = `org_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newOrg: Organization = {
-      _id: `org_${Date.now()}`,
+      _id: uniqueId,
       name: data.name || 'New Organization',
       slug: cleanSlug,
       industry: data.industry || 'General Business',
@@ -236,13 +249,13 @@ export const DataService = {
       createdAt: new Date().toISOString(),
     };
 
-    const mongo = await connectToDatabase();
     if (mongo) {
       try {
         const created = await OrganizationModel.create(newOrg);
         return { ...created.toObject(), _id: created._id.toString() } as unknown as Organization;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error creating org in MongoDB:', err);
+        throw new Error(`Database error saving organization: ${err.message}`);
       }
     }
 
@@ -306,8 +319,9 @@ export const DataService = {
   },
 
   async createUser(data: Partial<User>): Promise<User> {
+    const uniqueId = `u_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newUser: User = {
-      _id: `u_${Date.now()}`,
+      _id: uniqueId,
       orgId: data.orgId!,
       name: data.name || 'Business User',
       email: data.email!.trim().toLowerCase(),
@@ -322,8 +336,9 @@ export const DataService = {
       try {
         const created = await UserModel.create(newUser);
         return { ...created.toObject(), _id: created._id.toString() } as unknown as User;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error creating user in MongoDB:', err);
+        throw new Error(`Database error saving user: ${err.message}`);
       }
     }
 
@@ -479,17 +494,26 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        // No dummy leads seeding
+        const org = await OrganizationModel.findOne({ $or: [{ _id: orgId }, { slug: orgId }] } as any).lean();
+        const primaryId = org ? org._id.toString() : orgId;
+        const orgSlug = org?.slug || orgId;
 
-        const query: any = { orgId };
+        const query: any = {
+          $or: [{ orgId: primaryId }, { orgId: orgSlug }],
+        };
+
         if (filters?.stage && filters.stage !== 'all') query.stage = filters.stage;
         if (filters?.priority && filters.priority !== 'all') query.priority = filters.priority;
         if (filters?.search) {
-          query.$or = [
-            { name: { $regex: filters.search, $options: 'i' } },
-            { phone: { $regex: filters.search, $options: 'i' } },
-            { email: { $regex: filters.search, $options: 'i' } },
-            { company: { $regex: filters.search, $options: 'i' } },
+          query.$and = [
+            {
+              $or: [
+                { name: { $regex: filters.search, $options: 'i' } },
+                { phone: { $regex: filters.search, $options: 'i' } },
+                { email: { $regex: filters.search, $options: 'i' } },
+                { company: { $regex: filters.search, $options: 'i' } },
+              ],
+            },
           ];
         }
 
@@ -537,8 +561,9 @@ export const DataService = {
   },
 
   async createLead(data: Partial<Lead>): Promise<Lead> {
+    const uniqueId = `lead_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newLead: Lead = {
-      _id: `lead_${Date.now()}`,
+      _id: uniqueId,
       orgId: data.orgId!,
       name: data.name!,
       company: data.company || '',
@@ -561,8 +586,9 @@ export const DataService = {
       try {
         const created = await LeadModel.create(newLead);
         return { ...created.toObject(), _id: created._id.toString() } as unknown as Lead;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error creating lead in MongoDB:', err);
+        throw new Error(`Database error saving lead: ${err.message}`);
       }
     }
 
@@ -642,8 +668,9 @@ export const DataService = {
   },
 
   async addActivity(data: Partial<Activity>): Promise<Activity> {
+    const uniqueId = `act_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newActivity: Activity = {
-      _id: `act_${Date.now()}`,
+      _id: uniqueId,
       orgId: data.orgId!,
       leadId: data.leadId!,
       user: data.user || { _id: 'u_admin', name: 'Admin' },
@@ -661,8 +688,9 @@ export const DataService = {
         const created = await ActivityModel.create(newActivity);
         await LeadModel.updateOne({ _id: data.leadId }, { $inc: { notesCount: 1 } });
         return { ...created.toObject(), _id: created._id.toString() } as unknown as Activity;
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error adding activity to MongoDB:', err);
+        throw new Error(`Database error saving activity: ${err.message}`);
       }
     }
 
@@ -708,7 +736,11 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        recentActivities = (await ActivityModel.find({ orgId }).sort({ createdAt: -1 }).limit(8).lean()).map((a) => ({
+        const org = await OrganizationModel.findOne({ $or: [{ _id: orgId }, { slug: orgId }] } as any).lean();
+        const primaryId = org ? org._id.toString() : orgId;
+        const orgSlug = org?.slug || orgId;
+
+        recentActivities = (await ActivityModel.find({ $or: [{ orgId: primaryId }, { orgId: orgSlug }] }).sort({ createdAt: -1 }).limit(8).lean()).map((a) => ({
           ...a,
           _id: a._id.toString(),
         })) as unknown as Activity[];
@@ -745,8 +777,8 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        const org = await OrganizationModel.findByIdAndUpdate(
-          orgId,
+        const org = await OrganizationModel.findOneAndUpdate(
+          { $or: [{ _id: orgId }, { slug: orgId }] } as any,
           { $push: { modules: newModule } },
           { new: true }
         ).lean();
@@ -755,7 +787,7 @@ export const DataService = {
         console.error('Error creating custom module in MongoDB:', err);
       }
     }
-    const memOrg = mockOrgs.find((o) => o._id === orgId);
+    const memOrg = mockOrgs.find((o) => o._id === orgId || o.slug === orgId);
     if (memOrg) {
       memOrg.modules = [...(memOrg.modules || []), newModule];
       return memOrg;
@@ -768,7 +800,7 @@ export const DataService = {
     if (mongo) {
       try {
         const org = await OrganizationModel.findOneAndUpdate(
-          { _id: orgId, 'modules.slug': moduleSlug },
+          { $or: [{ _id: orgId }, { slug: orgId }], 'modules.slug': moduleSlug } as any,
           { $set: { 'modules.$.fields': fields } },
           { new: true }
         ).lean();
@@ -777,7 +809,7 @@ export const DataService = {
         console.error('Error updating module layout in MongoDB:', err);
       }
     }
-    const memOrg = mockOrgs.find((o) => o._id === orgId);
+    const memOrg = mockOrgs.find((o) => o._id === orgId || o.slug === orgId);
     if (memOrg && memOrg.modules) {
       memOrg.modules = memOrg.modules.map((m) => (m.slug === moduleSlug ? { ...m, fields } : m));
       return memOrg;
@@ -805,7 +837,7 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        const org = await OrganizationModel.findById(orgId);
+        const org = await OrganizationModel.findOne({ $or: [{ _id: orgId }, { slug: orgId }] } as any);
         if (org) {
           const modExists = (org.modules || []).some((m: any) => m.slug === moduleSlug);
           if (!modExists) {
@@ -825,7 +857,7 @@ export const DataService = {
             return { ...org.toObject(), _id: org._id.toString() } as unknown as Organization;
           } else {
             const updated = await OrganizationModel.findOneAndUpdate(
-              { _id: orgId, 'modules.slug': moduleSlug },
+              { $or: [{ _id: orgId }, { slug: orgId }], 'modules.slug': moduleSlug } as any,
               { $push: { 'modules.$.records': recordWithId } },
               { new: true }
             ).lean();
@@ -837,7 +869,7 @@ export const DataService = {
       }
     }
 
-    const memOrg = mockOrgs.find((o) => o._id === orgId);
+    const memOrg = mockOrgs.find((o) => o._id === orgId || o.slug === orgId);
     if (memOrg) {
       if (!memOrg.modules) memOrg.modules = [];
       const mIdx = memOrg.modules.findIndex((m) => m.slug === moduleSlug);
@@ -865,7 +897,7 @@ export const DataService = {
     if (mongo) {
       try {
         const org = await OrganizationModel.findOneAndUpdate(
-          { _id: orgId, 'modules.slug': moduleSlug },
+          { $or: [{ _id: orgId }, { slug: orgId }], 'modules.slug': moduleSlug } as any,
           { $pull: { 'modules.$.records': { _id: recordId } } },
           { new: true }
         ).lean();
@@ -874,7 +906,7 @@ export const DataService = {
         console.error('Error deleting module record in MongoDB:', err);
       }
     }
-    const memOrg = mockOrgs.find((o) => o._id === orgId);
+    const memOrg = mockOrgs.find((o) => o._id === orgId || o.slug === orgId);
     if (memOrg && memOrg.modules) {
       memOrg.modules = memOrg.modules.map((m) =>
         m.slug === moduleSlug
