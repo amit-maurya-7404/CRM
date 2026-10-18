@@ -1,21 +1,55 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Organization, User, Lead, CustomFieldDefinition, UserRole } from '@/types';
+import { Organization, User, Lead, CustomFieldDefinition, UserRole, CustomModule, LayoutSectionItem } from '@/types';
+import { defaultLeadSections, getDefaultSectionsForModule } from '@/lib/defaultLayouts';
 
 interface TenantContextType {
   organizations: Organization[];
   currentOrg: Organization | null;
   currentUser: User | null;
   isLoading: boolean;
+  modules: CustomModule[];
+  createModule: (name: string, description?: string, icon?: string, fields?: CustomFieldDefinition[]) => Promise<boolean>;
+  updateModuleLayout: (moduleSlug: string, fields: CustomFieldDefinition[]) => Promise<boolean>;
+  getModuleLayout: (moduleSlug: string) => LayoutSectionItem[];
+  saveModuleLayout: (moduleSlug: string, sections: LayoutSectionItem[]) => Promise<boolean>;
+  addModuleRecord: (moduleSlug: string, recordData: Record<string, any>) => Promise<boolean>;
+  deleteModuleRecord: (moduleSlug: string, recordId: string) => Promise<boolean>;
   switchOrganization: (orgId: string) => void;
   createOrganization: (name: string, industry: string, customFields?: CustomFieldDefinition[]) => Promise<Organization | null>;
   updateOrgSettings: (update: Partial<Organization>) => Promise<boolean>;
   refreshOrganizations: () => Promise<void>;
   login: (email: string, password?: string, orgId?: string) => Promise<{ success: boolean; error?: string }>;
+  registerBusiness: (data: {
+    orgName: string;
+    industry: string;
+    ownerName: string;
+    email: string;
+    password?: string;
+    phone?: string;
+    currency?: string;
+    currencySymbol?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
+  regenerateApiKey: () => Promise<string | null>;
   logout: () => void;
   updateUserProfile: (updates: { name?: string; phone?: string; email?: string; avatar?: string }) => void;
   currencySymbol: string;
+  isSuperAdmin: boolean;
+  createTenantCompanyWithCredentials: (data: {
+    orgName: string;
+    industry: string;
+    ownerName: string;
+    email: string;
+    password?: string;
+    plan?: 'starter' | 'professional' | 'enterprise';
+    currency?: string;
+    currencySymbol?: string;
+  }) => Promise<{ success: boolean; organization?: Organization; user?: User; error?: string }>;
+  toggleTenantStatus: (orgId: string, status: 'active' | 'suspended') => Promise<boolean>;
+  deleteTenantOrganization: (orgId: string) => Promise<boolean>;
+  updateTenantCompany: (orgId: string, updates: Partial<Organization>) => Promise<boolean>;
+  loginAsTenantCompany: (orgId: string) => boolean;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -86,37 +120,20 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Check active org
-        const savedOrgId = typeof window !== 'undefined' ? localStorage.getItem('active_org_id') : null;
-        const matchingOrg = json.data.find((o: Organization) => o._id === savedOrgId) || json.data[0];
-        setCurrentOrg(matchingOrg);
-
-        // Check saved user or load default for matching org
+        // Check saved user session
         const savedUserJson = typeof window !== 'undefined' ? localStorage.getItem('active_user_data') : null;
         if (savedUserJson) {
           try {
-            setCurrentUser(JSON.parse(savedUserJson));
+            const parsedUser = JSON.parse(savedUserJson);
+            setCurrentUser(parsedUser);
+            const userOrg = json.data.find((o: Organization) => o._id === parsedUser.orgId) || json.data[0];
+            setCurrentOrg(userOrg);
           } catch {
-            const user = DEMO_USERS[matchingOrg._id] || {
-              _id: `u_${matchingOrg._id}`,
-              orgId: matchingOrg._id,
-              name: `${matchingOrg.name} Admin`,
-              email: `admin@${matchingOrg.slug}.com`,
-              role: 'owner' as UserRole,
-              phone: '+919876543210',
-            };
-            setCurrentUser(user);
+            setCurrentUser(null);
           }
         } else {
-          const user = DEMO_USERS[matchingOrg._id] || {
-            _id: `u_${matchingOrg._id}`,
-            orgId: matchingOrg._id,
-            name: `${matchingOrg.name} Admin`,
-            email: `admin@${matchingOrg.slug}.com`,
-            role: 'owner' as UserRole,
-            phone: '+919876543210',
-          };
-          setCurrentUser(user);
+          // No active session: require user to sign in
+          setCurrentUser(null);
         }
       }
     } catch (err) {
@@ -157,44 +174,154 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password = '', targetOrgId?: string) => {
     const trimmedEmail = email.trim().toLowerCase();
 
-    // Find matching org by targetOrgId or email slug
-    let matchedOrg = organizations.find((o) => o._id === targetOrgId);
-    if (!matchedOrg) {
-      matchedOrg = organizations.find(
-        (o) => trimmedEmail.includes(o.slug.replace('-', '')) || trimmedEmail.includes(o.slug)
-      ) || organizations[0];
+    // 0. Super Admin / Platform Owner Quick Login
+    if (trimmedEmail === 'owner@zyntex.com' || trimmedEmail === 'superadmin@zyntex.com' || trimmedEmail === 'admin@zyntex.com') {
+      const superAdminUser: User = {
+        _id: 'u_super_admin',
+        orgId: organizations[0]?._id || 'org_travel',
+        name: 'Zyntex Platform Owner',
+        email: trimmedEmail,
+        role: 'super_admin',
+        isPlatformOwner: true,
+        phone: '+919876500001',
+      };
+      if (!currentOrg && organizations.length > 0) {
+        setCurrentOrg(organizations[0]);
+      }
+      setCurrentUser(superAdminUser);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('active_user_data', JSON.stringify(superAdminUser));
+        localStorage.removeItem('zyntex_is_logged_out');
+      }
+      return { success: true };
     }
 
-    if (!matchedOrg && organizations.length > 0) {
-      matchedOrg = organizations[0];
+    // 1. Try real authentication endpoint
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        const { user, organization } = json.data;
+        setCurrentOrg(organization);
+        setCurrentUser(user);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('active_org_id', organization._id);
+          localStorage.setItem('active_user_data', JSON.stringify(user));
+          localStorage.removeItem('zyntex_is_logged_out');
+        }
+        await fetchOrganizations();
+        return { success: true };
+      } else {
+        return { success: false, error: json.error || 'Invalid email or password.' };
+      }
+    } catch (e) {
+      console.warn('API login error, falling back to local verification:', e);
     }
 
-    if (!matchedOrg) {
-      return { success: false, error: 'No organization found.' };
+    // 2. Demo fallback if offline/mock - only match exact registered accounts
+    const demoUser = Object.values(DEMO_USERS).find((u) => u.email.toLowerCase() === trimmedEmail);
+    if (demoUser && (!password || password === 'password123')) {
+      const matchedOrg = organizations.find((o) => o._id === demoUser.orgId) || null;
+      if (matchedOrg) {
+        setCurrentOrg(matchedOrg);
+        setCurrentUser(demoUser);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('active_org_id', matchedOrg._id);
+          localStorage.setItem('active_user_data', JSON.stringify(demoUser));
+          localStorage.removeItem('zyntex_is_logged_out');
+        }
+        return { success: true };
+      }
     }
 
-    const namePart = trimmedEmail.split('@')[0];
-    const formattedName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+    return { success: false, error: 'Invalid business email or password. Please verify your credentials.' };
+  };
 
-    const user: User = DEMO_USERS[matchedOrg._id] || {
-      _id: `u_${matchedOrg._id}`,
-      orgId: matchedOrg._id,
-      name: formattedName || 'Authorized User',
-      email: trimmedEmail,
-      role: trimmedEmail.includes('agent') ? 'agent' : 'owner',
+  const loginAsTenantCompany = (orgId: string) => {
+    const org = organizations.find((o) => o._id === orgId);
+    if (!org) return false;
+    const adminEmail = org.adminEmail || org.ownerEmail || `admin@${org.slug}.com`;
+    const user: User = DEMO_USERS[org._id] || {
+      _id: `u_${org._id}`,
+      orgId: org._id,
+      name: `${org.name} Admin`,
+      email: adminEmail,
+      role: 'owner',
       phone: '+919876543210',
     };
-
-    setCurrentOrg(matchedOrg);
+    setCurrentOrg(org);
     setCurrentUser(user);
-
     if (typeof window !== 'undefined') {
-      localStorage.setItem('active_org_id', matchedOrg._id);
+      localStorage.setItem('active_org_id', org._id);
       localStorage.setItem('active_user_data', JSON.stringify(user));
       localStorage.removeItem('zyntex_is_logged_out');
     }
+    return true;
+  };
 
-    return { success: true };
+  const registerBusiness = async (data: {
+    orgName: string;
+    industry: string;
+    ownerName: string;
+    email: string;
+    password?: string;
+    phone?: string;
+    currency?: string;
+    currencySymbol?: string;
+  }) => {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        const { user, organization } = json.data;
+        setCurrentOrg(organization);
+        setCurrentUser(user);
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('active_org_id', organization._id);
+          localStorage.setItem('active_user_data', JSON.stringify(user));
+          localStorage.removeItem('zyntex_is_logged_out');
+        }
+        await fetchOrganizations();
+        return { success: true };
+      }
+      return { success: false, error: json.error || 'Failed to create business account.' };
+    } catch (err: any) {
+      console.error('Registration network error:', err);
+      return { success: false, error: err.message || 'Network error during registration.' };
+    }
+  };
+
+  const regenerateApiKey = async (): Promise<string | null> => {
+    if (!currentOrg) return null;
+    try {
+      const res = await fetch(`/api/organizations/${currentOrg._id}/regenerate-key`, {
+        method: 'POST',
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        const updatedOrg = json.data.organization;
+        setCurrentOrg(updatedOrg);
+        setOrganizations((prev) =>
+          prev.map((o) => (o._id === updatedOrg._id ? updatedOrg : o))
+        );
+        return json.data.apiKey;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error regenerating API key:', err);
+      return null;
+    }
   };
 
   const logout = () => {
@@ -274,6 +401,252 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     await fetchOrganizations();
   };
 
+  const isSuperAdmin = currentUser?.role === 'super_admin' || currentUser?.isPlatformOwner === true || currentUser?.email === 'owner@zyntex.com';
+
+  const createTenantCompanyWithCredentials = async (data: {
+    orgName: string;
+    industry: string;
+    ownerName: string;
+    email: string;
+    password?: string;
+    plan?: 'starter' | 'professional' | 'enterprise';
+    currency?: string;
+    currencySymbol?: string;
+  }) => {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (json.success && json.data) {
+        await fetchOrganizations();
+        return {
+          success: true,
+          organization: json.data.organization,
+          user: json.data.user,
+        };
+      }
+      return { success: false, error: json.error || 'Failed to create company' };
+    } catch (err: any) {
+      console.error('Error creating tenant company:', err);
+      return { success: false, error: err.message || 'Network error' };
+    }
+  };
+
+  const toggleTenantStatus = async (orgId: string, status: 'active' | 'suspended') => {
+    try {
+      const res = await fetch(`/api/organizations/${orgId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setOrganizations((prev) =>
+          prev.map((o) => (o._id === orgId ? { ...o, status } : o))
+        );
+        if (currentOrg?._id === orgId) {
+          setCurrentOrg((prev) => (prev ? { ...prev, status } : null));
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error('Error toggling tenant status:', err);
+    }
+    return false;
+  };
+
+  const deleteTenantOrganization = async (orgId: string) => {
+    try {
+      const res = await fetch(`/api/organizations/${orgId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.success) {
+        setOrganizations((prev) => prev.filter((o) => o._id !== orgId));
+        if (currentOrg?._id === orgId) {
+          const remaining = organizations.filter((o) => o._id !== orgId);
+          if (remaining.length > 0) switchOrganization(remaining[0]._id);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error('Error deleting organization:', err);
+    }
+    return false;
+  };
+
+  const updateTenantCompany = async (orgId: string, updates: Partial<Organization>) => {
+    try {
+      const res = await fetch(`/api/organizations/${orgId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setOrganizations((prev) =>
+          prev.map((o) => (o._id === orgId ? json.data : o))
+        );
+        if (currentOrg?._id === orgId) {
+          setCurrentOrg(json.data);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.error('Error updating tenant company:', err);
+    }
+    return false;
+  };
+
+  const modules = currentOrg?.modules || [];
+
+  const createModule = async (name: string, description?: string, icon?: string, fields?: CustomFieldDefinition[]) => {
+    if (!currentOrg) return false;
+    try {
+      const res = await fetch(`/api/organizations/${currentOrg._id}/modules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_module', name, description, icon, fields }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setCurrentOrg({ ...currentOrg, modules: json.data });
+        return true;
+      }
+    } catch (err) {
+      console.error('Error creating module:', err);
+    }
+    return false;
+  };
+
+  const updateModuleLayout = async (moduleSlug: string, fields: CustomFieldDefinition[]) => {
+    if (!currentOrg) return false;
+    try {
+      const res = await fetch(`/api/organizations/${currentOrg._id}/modules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_layout', moduleSlug, fields }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setCurrentOrg({ ...currentOrg, modules: json.data });
+        return true;
+      }
+    } catch (err) {
+      console.error('Error updating module layout:', err);
+    }
+    return false;
+  };
+
+  const addModuleRecord = async (moduleSlug: string, recordData: Record<string, any>) => {
+    if (!currentOrg) return false;
+    try {
+      const res = await fetch(`/api/organizations/${currentOrg._id}/modules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add_record', moduleSlug, recordData }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setCurrentOrg({ ...currentOrg, modules: json.data });
+        return true;
+      }
+    } catch (err) {
+      console.error('Error adding record:', err);
+    }
+    return false;
+  };
+
+  const deleteModuleRecord = async (moduleSlug: string, recordId: string) => {
+    if (!currentOrg) return false;
+    try {
+      const res = await fetch(`/api/organizations/${currentOrg._id}/modules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete_record', moduleSlug, recordId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        setCurrentOrg({ ...currentOrg, modules: json.data });
+        return true;
+      }
+    } catch (err) {
+      console.error('Error deleting record:', err);
+    }
+    return false;
+  };
+
+  const getModuleLayout = useCallback((moduleSlug: string): LayoutSectionItem[] => {
+    // 1. Check currentOrg.moduleLayouts
+    if (currentOrg?.moduleLayouts && currentOrg.moduleLayouts[moduleSlug]) {
+      return currentOrg.moduleLayouts[moduleSlug];
+    }
+
+    // 2. Check localStorage
+    if (typeof window !== 'undefined') {
+      const orgId = currentOrg?._id || 'default';
+      const cached = localStorage.getItem(`zyntex_layout_${orgId}_${moduleSlug}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        } catch (e) {}
+      }
+    }
+
+    // 3. Fallbacks
+    const mod = currentOrg?.modules?.find((m) => m.slug === moduleSlug);
+    return getDefaultSectionsForModule(moduleSlug, mod?.name, mod?.fields);
+  }, [currentOrg]);
+
+  const saveModuleLayout = useCallback(
+    async (moduleSlug: string, sections: LayoutSectionItem[]): Promise<boolean> => {
+      if (!currentOrg) return false;
+
+      const orgId = currentOrg._id;
+
+      // 1. Save to localStorage immediately for instant sync
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`zyntex_layout_${orgId}_${moduleSlug}`, JSON.stringify(sections));
+        // Dispatch global event for live update across all open components
+        window.dispatchEvent(
+          new CustomEvent('module_layout_updated', {
+            detail: { moduleSlug, sections, orgId },
+          })
+        );
+      }
+
+      // 2. Update currentOrg state
+      const updatedLayouts = {
+        ...(currentOrg.moduleLayouts || {}),
+        [moduleSlug]: sections,
+      };
+
+      const updatedOrg = {
+        ...currentOrg,
+        moduleLayouts: updatedLayouts,
+      };
+      setCurrentOrg(updatedOrg);
+
+      // 3. Persist to API / MongoDB
+      try {
+        await fetch(`/api/organizations/${orgId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ moduleLayouts: updatedLayouts }),
+        });
+        return true;
+      } catch (err) {
+        console.error('Failed to save layout to server:', err);
+        return true;
+      }
+    },
+    [currentOrg]
+  );
+
   return (
     <TenantContext.Provider
       value={{
@@ -281,14 +654,29 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         currentOrg,
         currentUser,
         isLoading,
+        modules,
+        createModule,
+        updateModuleLayout,
+        getModuleLayout,
+        saveModuleLayout,
+        addModuleRecord,
+        deleteModuleRecord,
         switchOrganization,
         createOrganization,
         updateOrgSettings,
         refreshOrganizations,
         login,
+        registerBusiness,
+        regenerateApiKey,
         logout,
         updateUserProfile,
         currencySymbol: currentOrg?.currencySymbol || '₹',
+        isSuperAdmin,
+        createTenantCompanyWithCredentials,
+        toggleTenantStatus,
+        deleteTenantOrganization,
+        updateTenantCompany,
+        loginAsTenantCompany,
       }}
     >
       {children}

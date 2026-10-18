@@ -27,12 +27,12 @@ interface KanbanBoardProps {
 }
 
 const STAGES: { id: LeadStage; title: string; color: string; bgBadge: string; border: string }[] = [
-  { id: 'new', title: 'New Leads', color: 'text-indigo-400', bgBadge: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20', border: 'border-t-indigo-500' },
-  { id: 'contacted', title: 'Contacted', color: 'text-sky-400', bgBadge: 'bg-sky-500/10 text-sky-300 border-sky-500/20', border: 'border-t-sky-500' },
-  { id: 'meeting', title: 'Meeting / Demo', color: 'text-amber-400', bgBadge: 'bg-amber-500/10 text-amber-300 border-amber-500/20', border: 'border-t-amber-500' },
-  { id: 'proposal', title: 'Proposal Sent', color: 'text-purple-400', bgBadge: 'bg-purple-500/10 text-purple-300 border-purple-500/20', border: 'border-t-purple-500' },
-  { id: 'won', title: 'Won Deals 🏆', color: 'text-emerald-400', bgBadge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20', border: 'border-t-emerald-500' },
-  { id: 'lost', title: 'Lost / Inactive', color: 'text-rose-400', bgBadge: 'bg-rose-500/10 text-rose-300 border-rose-500/20', border: 'border-t-rose-500' },
+  { id: 'new', title: 'New Leads', color: 'text-blue-700', bgBadge: 'bg-blue-50 text-blue-700 border-blue-200', border: 'border-t-blue-600' },
+  { id: 'contacted', title: 'Contacted', color: 'text-sky-700', bgBadge: 'bg-sky-50 text-sky-700 border-sky-200', border: 'border-t-sky-500' },
+  { id: 'meeting', title: 'Meeting / Demo', color: 'text-amber-700', bgBadge: 'bg-amber-50 text-amber-700 border-amber-200', border: 'border-t-amber-500' },
+  { id: 'proposal', title: 'Proposal Sent', color: 'text-purple-700', bgBadge: 'bg-purple-50 text-purple-700 border-purple-200', border: 'border-t-purple-500' },
+  { id: 'won', title: 'Won Deals 🏆', color: 'text-emerald-700', bgBadge: 'bg-emerald-50 text-emerald-700 border-emerald-200', border: 'border-t-emerald-600' },
+  { id: 'lost', title: 'Lost / Inactive', color: 'text-rose-700', bgBadge: 'bg-rose-50 text-rose-700 border-rose-200', border: 'border-t-rose-400' },
 ];
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
@@ -53,7 +53,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#10B981', '#6366F1', '#F59E0B', '#3B82F6'],
+        colors: ['#2563EB', '#10B981', '#F59E0B', '#3B82F6'],
       });
     }
 
@@ -65,13 +65,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const priorityBadge = (priority: Lead['priority']) => {
     switch (priority) {
       case 'urgent':
-        return <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold text-rose-400 border border-rose-500/30">Urgent</span>;
+        return <span className="rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold text-rose-700 border border-rose-200">Urgent</span>;
       case 'high':
-        return <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 border border-amber-500/30">High</span>;
+        return <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 border border-amber-200">High</span>;
       case 'medium':
-        return <span className="rounded bg-indigo-500/15 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400 border border-indigo-500/20">Medium</span>;
+        return <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 border border-blue-200">Medium</span>;
       default:
-        return <span className="rounded bg-slate-700/50 px-1.5 py-0.5 text-[10px] text-slate-400">Low</span>;
+        return <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">Low</span>;
     }
   };
 
@@ -84,10 +84,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         return (
           <div
             key={stage.id}
-            className={`flex w-72 sm:w-80 shrink-0 flex-col rounded-xl border border-slate-800 bg-slate-900/60 shadow-lg backdrop-blur-md border-t-2 ${stage.border}`}
+            className={`flex w-72 sm:w-80 shrink-0 flex-col rounded-2xl border border-slate-200 bg-slate-100/70 shadow-sm border-t-4 ${stage.border}`}
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 p-3.5">
+            <div className="flex items-center justify-between border-b border-slate-200/80 p-3.5 bg-white/70 rounded-t-xl">
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-bold uppercase tracking-wider ${stage.color}`}>
                   {stage.title}
@@ -97,7 +97,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[11px] font-semibold text-slate-300">
+                <span className="text-[11px] font-bold text-slate-700">
                   {formatCurrency(stageTotalValue, currencySymbol)}
                 </span>
               </div>
@@ -106,8 +106,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             {/* Cards List */}
             <div className="flex-1 space-y-3 overflow-y-auto p-3 max-h-[calc(100vh-210px)] min-h-[400px]">
               {stageLeads.length === 0 ? (
-                <div className="flex h-32 flex-col items-center justify-center rounded-lg border border-dashed border-slate-800/80 text-center p-4">
-                  <p className="text-xs text-slate-500">No leads in this stage</p>
+                <div className="flex h-32 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 text-center p-4">
+                  <p className="text-xs text-slate-400 font-medium">No leads in this stage</p>
                 </div>
               ) : (
                 stageLeads.map((lead) => {
@@ -119,25 +119,25 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                     <div
                       key={lead._id}
                       onClick={() => onSelectLead(lead)}
-                      className={`group relative rounded-lg border border-slate-800 bg-slate-850/90 p-3.5 shadow-md transition-all hover:border-indigo-500/50 hover:bg-slate-800/90 hover:shadow-indigo-500/10 cursor-pointer ${
+                      className={`group relative rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition-all hover:border-blue-400 hover:shadow-md cursor-pointer ${
                         isMoving ? 'opacity-50 scale-95 pointer-events-none' : ''
                       }`}
                     >
                       {/* Priority & Lead Value */}
                       <div className="flex items-center justify-between gap-2 mb-2">
                         {priorityBadge(lead.priority)}
-                        <span className="text-xs font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20">
+                        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                           {formatCurrency(lead.value, currencySymbol)}
                         </span>
                       </div>
 
                       {/* Lead Name & Company */}
                       <div className="space-y-0.5">
-                        <h4 className="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                        <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
                           {lead.name}
                         </h4>
                         {lead.company && (
-                          <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                          <div className="flex items-center gap-1 text-[11px] text-slate-500">
                             <Building className="h-3 w-3" />
                             <span className="truncate">{lead.company}</span>
                           </div>
@@ -146,28 +146,28 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
                       {/* Custom Field Badge if present */}
                       {firstCustomFieldVal && (
-                        <div className="mt-2.5 inline-flex items-center gap-1 rounded bg-slate-800 px-2 py-1 text-[10px] font-medium text-slate-300 border border-slate-700/60 max-w-full truncate">
-                          <span className="text-indigo-400 font-semibold">{currentOrg?.customFields?.[0]?.label}:</span>
+                        <div className="mt-2.5 inline-flex items-center gap-1 rounded bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-700 border border-slate-200 max-w-full truncate">
+                          <span className="text-blue-600 font-semibold">{currentOrg?.customFields?.[0]?.label}:</span>
                           <span className="truncate">{firstCustomFieldVal}</span>
                         </div>
                       )}
 
                       {/* Follow-up reminder if present */}
                       {lead.nextFollowUp && (
-                        <div className="mt-2 flex items-center gap-1 text-[10px] text-amber-400/90 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                          <Clock className="h-3 w-3 shrink-0" />
+                        <div className="mt-2 flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-medium">
+                          <Clock className="h-3 w-3 shrink-0 text-amber-600" />
                           <span>Follow-up: {formatDate(lead.nextFollowUp)}</span>
                         </div>
                       )}
 
                       {/* Action Bar (WhatsApp, Call, Stage Advance) */}
-                      <div className="mt-3.5 flex items-center justify-between border-t border-slate-800/80 pt-2.5">
+                      <div className="mt-3.5 flex items-center justify-between border-t border-slate-100 pt-2.5">
                         <div className="flex items-center gap-1.5">
                           {/* 1-Click WhatsApp */}
                           <button
                             title="Chat on WhatsApp"
                             onClick={(e) => onOpenWhatsApp(lead, e)}
-                            className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all border border-emerald-500/30"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-all border border-emerald-200"
                           >
                             <MessageSquare className="h-3.5 w-3.5" />
                           </button>
@@ -177,7 +177,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                             href={`tel:${lead.phone}`}
                             title={`Call ${lead.phone}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan-600/15 text-cyan-400 hover:bg-cyan-600 hover:text-white transition-all border border-cyan-500/30"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition-all border border-blue-200"
                           >
                             <Phone className="h-3.5 w-3.5" />
                           </a>
@@ -188,7 +188,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                           <select
                             value={lead.stage}
                             onChange={(e) => handleStageChange(lead, e.target.value as LeadStage, e as any)}
-                            className="h-6 rounded border border-slate-700 bg-slate-800 px-1.5 text-[10px] font-medium text-slate-300 focus:border-indigo-500 focus:outline-none"
+                            className="h-6 rounded-md border border-slate-200 bg-slate-50 px-1.5 text-[10px] font-medium text-slate-700 focus:border-blue-600 focus:outline-none"
                           >
                             {STAGES.map((s) => (
                               <option key={s.id} value={s.id}>

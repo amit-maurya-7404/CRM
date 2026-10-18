@@ -37,6 +37,9 @@ export const IntegrationsView: React.FC = () => {
 
   const orgSlug = currentOrg?.slug || 'wanderlust-travel';
   const orgName = currentOrg?.name || 'Your Company';
+  const apiKey =
+    currentOrg?.apiKey ||
+    (currentOrg?._id === 'org_travel' ? 'zyn_live_travel_9a2b8e4f107c88d2e4a1' : `zyn_live_${currentOrg?._id || 'demo'}_key`);
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
   // Embed URL
@@ -54,9 +57,10 @@ export const IntegrationsView: React.FC = () => {
   title="Inquiry Form - ${orgName}"
 ></iframe>`;
 
-  const htmlFormCode = `<!-- Zyntex CRM Direct HTML Form (WordPress / Webflow / Elementor) -->
+  const htmlFormCode = `<!-- Zyntex CRM Direct HTML Form (WordPress / Webflow / Elementor / Wix) -->
 <form action="${webhookUrl}" method="POST" style="max-width: 480px; font-family: sans-serif;">
-  <input type="hidden" name="orgId" value="${currentOrg?._id || orgSlug}" />
+  <!-- Zoho-style Secure API Key Authentication -->
+  <input type="hidden" name="apiKey" value="${apiKey}" />
   <input type="hidden" name="source" value="website" />
   
   <div style="margin-bottom: 12px;">
@@ -104,9 +108,10 @@ fetch('${webhookUrl}', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
+    'X-Zyntex-Api-Key': '${apiKey}', // Zoho-style API Key Header
   },
   body: JSON.stringify({
-    orgId: '${currentOrg?._id || orgSlug}',
+    apiKey: '${apiKey}',
     name: 'Customer Name',
     phone: '9876543210',
     email: 'customer@gmail.com',
@@ -131,6 +136,7 @@ fetch('${webhookUrl}', {
 
     try {
       const payload = {
+        apiKey,
         orgId: currentOrg?._id || orgSlug,
         slug: orgSlug,
         name: simName,
@@ -143,7 +149,10 @@ fetch('${webhookUrl}', {
 
       const res = await fetch('/api/v1/capture-lead', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Zyntex-Api-Key': apiKey,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -166,21 +175,21 @@ fetch('${webhookUrl}', {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="rounded-2xl border border-indigo-500/20 bg-gradient-to-r from-indigo-950/60 via-slate-900 to-slate-950 p-6 shadow-xl backdrop-blur-xl">
+      <div className="rounded-2xl border border-blue-200 bg-blue-50/60 p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
                 <Globe className="h-4 w-4" />
               </div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-700">
                 Web-to-Lead Integration Hub
               </span>
             </div>
-            <h2 className="text-2xl font-black tracking-tight text-white">
+            <h2 className="text-2xl font-black tracking-tight text-slate-900">
               Connect {currentOrg?.name} to Any Website
             </h2>
-            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs text-slate-600 max-w-2xl leading-relaxed font-medium">
               Zoho CRM aur HubSpot ki tarah, koi bhi lead jab client ki website (WordPress, Webflow, Shopify, HTML) par form fill karegi, wo direct aapke <strong>Zyntex CRM Pipeline</strong> me auto-create ho jayegi!
             </p>
           </div>
@@ -189,7 +198,7 @@ fetch('${webhookUrl}', {
             href={embedUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500 transition-all shrink-0"
+            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:bg-blue-700 transition-all shrink-0"
           >
             <ExternalLink className="h-4 w-4" />
             <span>Open Hosted Form</span>
@@ -200,15 +209,15 @@ fetch('${webhookUrl}', {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Embed Code Generator & Tabs (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
             {/* Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <button
                 onClick={() => setActiveIntegrationType('iframe')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                   activeIntegrationType === 'iframe'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <Smartphone className="h-3.5 w-3.5" />
@@ -216,10 +225,10 @@ fetch('${webhookUrl}', {
               </button>
               <button
                 onClick={() => setActiveIntegrationType('html')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                   activeIntegrationType === 'html'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <Code className="h-3.5 w-3.5" />
@@ -227,10 +236,10 @@ fetch('${webhookUrl}', {
               </button>
               <button
                 onClick={() => setActiveIntegrationType('webhook')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${
                   activeIntegrationType === 'webhook'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
                 <Webhook className="h-3.5 w-3.5" />
@@ -240,8 +249,8 @@ fetch('${webhookUrl}', {
 
             {/* Code Box */}
             <div className="mt-4 space-y-3">
-              <div className="flex items-center justify-between text-xs text-slate-400">
-                <span className="font-medium text-slate-300">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-500 font-medium">
+                <span className="font-semibold text-slate-700">
                   {activeIntegrationType === 'iframe' && 'Copy-paste this iframe on any website page (WordPress / Shopify / Wix):'}
                   {activeIntegrationType === 'html' && 'Copy this custom HTML form code for Elementor, WPForms or Webflow:'}
                   {activeIntegrationType === 'webhook' && 'Direct REST API endpoint with CORS enabled for frontend/backend:'}
@@ -257,31 +266,31 @@ fetch('${webhookUrl}', {
                       activeIntegrationType
                     )
                   }
-                  className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition-all active:scale-95"
+                  className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition-all active:scale-95 shrink-0"
                 >
                   {copiedKey === activeIntegrationType ? (
                     <>
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                      <span className="text-emerald-400">Copied!</span>
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">Copied!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="h-3.5 w-3.5 text-indigo-400" />
+                      <Copy className="h-3.5 w-3.5 text-blue-600" />
                       <span>Copy Snippet</span>
                     </>
                   )}
                 </button>
               </div>
 
-              <pre className="relative rounded-xl border border-slate-800 bg-slate-950 p-4 text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-[380px] leading-relaxed">
+              <pre className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 text-[11px] font-mono text-blue-900 overflow-x-auto max-h-[380px] leading-relaxed shadow-xs">
                 {activeIntegrationType === 'iframe' && iframeCode}
                 {activeIntegrationType === 'html' && htmlFormCode}
                 {activeIntegrationType === 'webhook' && webhookJsonCode}
               </pre>
 
-              <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-3 text-[11px] text-slate-400 flex items-center justify-between">
-                <span>Webhook Ingestion URL: <strong className="text-white font-mono text-[10px]">{webhookUrl}</strong></span>
-                <span className="text-emerald-400 font-semibold">CORS: Allow All (*)</span>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600 flex items-center justify-between font-medium">
+                <span>Webhook Ingestion URL: <strong className="text-blue-900 font-mono text-[10px] font-bold">{webhookUrl}</strong></span>
+                <span className="text-emerald-700 font-bold">CORS: Allow All (*)</span>
               </div>
             </div>
           </div>
@@ -289,21 +298,21 @@ fetch('${webhookUrl}', {
 
         {/* Right Column: Live Ingestion Simulator (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6 shadow-xl backdrop-blur-md">
-            <div className="flex items-center gap-2 border-b border-slate-800 pb-3 mb-4">
-              <Play className="h-4 w-4 text-emerald-400 fill-emerald-400/20" />
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+              <Play className="h-4 w-4 text-blue-600 fill-blue-600/20" />
               <div>
-                <h3 className="text-sm font-bold text-white">Live Website Form Test Simulator</h3>
-                <p className="text-[11px] text-slate-400">Test how a visitor inquiry flows into your CRM in real time</p>
+                <h3 className="text-sm font-bold text-slate-900">Live Website Form Test Simulator</h3>
+                <p className="text-[11px] text-slate-500 font-medium">Test how a visitor inquiry flows into your CRM in real time</p>
               </div>
             </div>
 
             {simResult && (
               <div
-                className={`mb-4 rounded-xl border p-3 text-xs ${
+                className={`mb-4 rounded-xl border p-3 text-xs font-semibold ${
                   simResult.success
-                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                    : 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                    : 'border-rose-200 bg-rose-50 text-rose-800'
                 }`}
               >
                 {simResult.message}
@@ -312,58 +321,58 @@ fetch('${webhookUrl}', {
 
             <form onSubmit={handleRunSimulator} className="space-y-3 text-xs">
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Visitor Name</label>
+                <label className="font-semibold text-slate-700">Visitor Name</label>
                 <input
                   type="text"
                   required
                   value={simName}
                   onChange={(e) => setSimName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-600 focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Phone</label>
+                  <label className="font-semibold text-slate-700">Phone</label>
                   <input
                     type="tel"
                     required
                     value={simPhone}
                     onChange={(e) => setSimPhone(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-600 focus:outline-none"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-semibold text-slate-300">Email</label>
+                  <label className="font-semibold text-slate-700">Email</label>
                   <input
                     type="email"
                     value={simEmail}
                     onChange={(e) => setSimEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-600 focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Dynamic Niche Field Preview */}
               {currentOrg?.customFields && currentOrg.customFields.length > 0 && (
-                <div className="space-y-2 pt-2 border-t border-slate-800">
-                  <div className="text-[10px] font-bold uppercase text-indigo-400">
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="text-[10px] font-bold uppercase text-blue-700">
                     {currentOrg.industry} Dynamic Fields
                   </div>
                   {currentOrg.customFields.slice(0, 2).map((field) => (
                     <div key={field.id} className="space-y-1">
-                      <label className="font-semibold text-slate-300">{field.label}</label>
+                      <label className="font-semibold text-slate-700">{field.label}</label>
                       {field.type === 'select' ? (
                         <select
                           value={simCustomFields[field.key] || ''}
                           onChange={(e) =>
                             setSimCustomFields((prev) => ({ ...prev, [field.key]: e.target.value }))
                           }
-                          className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-600 focus:outline-none"
                         >
                           <option value="">Select {field.label}...</option>
                           {field.options?.map((opt) => (
-                            <option key={opt} value={opt} className="bg-slate-900 text-white">
+                            <option key={opt} value={opt} className="bg-white text-slate-900">
                               {opt}
                             </option>
                           ))}
@@ -376,7 +385,7 @@ fetch('${webhookUrl}', {
                           onChange={(e) =>
                             setSimCustomFields((prev) => ({ ...prev, [field.key]: e.target.value }))
                           }
-                          className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none"
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-600 focus:outline-none"
                         />
                       )}
                     </div>
@@ -385,19 +394,19 @@ fetch('${webhookUrl}', {
               )}
 
               <div className="space-y-1">
-                <label className="font-semibold text-slate-300">Message / Requirement</label>
+                <label className="font-semibold text-slate-700">Message / Requirement</label>
                 <textarea
                   rows={2}
                   value={simMessage}
                   onChange={(e) => setSimMessage(e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-white focus:border-indigo-500 focus:outline-none resize-none"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-600 focus:outline-none resize-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSimulating}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-emerald-600/25 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.98] transition-all disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 {isSimulating ? (
                   <span>Sending Test Inquiry...</span>

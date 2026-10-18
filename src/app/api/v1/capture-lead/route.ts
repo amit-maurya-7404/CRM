@@ -5,7 +5,7 @@ import { DataService } from '@/lib/data-service';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Zyntex-Org',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Zyntex-Org, X-Zyntex-Api-Key, X-Api-Key',
 };
 
 export async function OPTIONS() {
@@ -44,14 +44,56 @@ export async function POST(req: Request) {
       }
     }
 
-    // Identify target company (by orgId or slug)
-    const orgIdentifier = body.orgId || body.org_id || body.slug || body.company_slug || 'org_travel';
-    const org = await DataService.getOrganizationById(orgIdentifier);
+    // Zoho-style API Key Authentication:
+    // 1. Headers: 'X-Zyntex-Api-Key', 'x-api-key', or 'Authorization: Bearer <key>'
+    // 2. Request Body: 'apiKey' or 'api_key'
+    // 3. Query string parameter: '?apiKey=' or '?api_key='
+    const headerKey = req.headers.get('x-zyntex-api-key') || req.headers.get('x-api-key');
+    const authHeader = req.headers.get('authorization');
+    const bearerKey = authHeader && authHeader.toLowerCase().startsWith('bearer ')
+      ? authHeader.slice(7).trim()
+      : null;
+    const url = new URL(req.url);
+    const queryKey = url.searchParams.get('apiKey') || url.searchParams.get('api_key');
+    const bodyKey = body.apiKey || body.api_key || body.key;
+
+    const apiKey = (headerKey || bearerKey || bodyKey || queryKey || '').trim();
+
+    let org = null;
+    if (apiKey) {
+      org = await DataService.getOrganizationByApiKey(apiKey);
+      if (!org) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Unauthorized: Invalid or revoked API Key. Please verify your active API Key in Zyntex CRM Profile settings.',
+          },
+          { status: 401, headers: corsHeaders }
+        );
+      }
+    } else {
+      // Fallback for internal embed forms or legacy submissions
+      const orgIdentifier =
+        body.orgId ||
+        body.org_id ||
+        body.slug ||
+        body.company_slug ||
+        url.searchParams.get('orgId') ||
+        url.searchParams.get('slug');
+
+      if (orgIdentifier) {
+        org = await DataService.getOrganizationById(orgIdentifier);
+      }
+    }
 
     if (!org) {
       return NextResponse.json(
-        { success: false, error: `Organization '${orgIdentifier}' not found in Zyntex CRM.` },
-        { status: 404, headers: corsHeaders }
+        {
+          success: false,
+          error:
+            'Missing Authentication: Please provide your company API Key in headers (X-Zyntex-Api-Key: zyn_live_...) or as a form field (apiKey). Get your API Key from your Zyntex CRM profile.',
+        },
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -103,12 +145,13 @@ export async function POST(req: Request) {
 
     // Automatically log incoming website activity
     const messageOrNotes = body.message || body.notes || body.comment || null;
+    const authBadge = apiKey ? '🔑 API Key Verified' : '🌐 Hosted Form';
     await DataService.addActivity({
       orgId: org._id,
       leadId: newLead._id,
       type: 'note',
-      user: { _id: 'u_system', name: 'Website Integration' },
-      content: `⚡ Web-to-Lead Form Capture: Lead originated from external website form.${messageOrNotes ? ` Message: "${messageOrNotes}"` : ''}`,
+      user: { _id: 'u_system', name: 'Web-to-Lead API' },
+      content: `⚡ Web-to-Lead Ingestion [${authBadge}]: New inquiry captured from website.${messageOrNotes ? ` Message: "${messageOrNotes}"` : ''}`,
     });
 
     // If submitted via regular HTML form with a redirect URL

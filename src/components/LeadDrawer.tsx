@@ -141,21 +141,21 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm animate-in fade-in">
+    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
       <div className="absolute inset-y-0 right-0 flex max-w-full pl-10">
-        <div className="w-screen max-w-xl border-l border-slate-700/80 bg-slate-900 shadow-2xl flex flex-col">
+        <div className="w-screen max-w-xl border-l border-slate-200 bg-white shadow-2xl flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-800 p-5 bg-slate-950/40">
+          <div className="flex items-center justify-between border-b border-slate-100 p-5 bg-white">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-white">{lead.name}</h2>
-                <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-400 border border-emerald-500/30">
+                <h2 className="text-lg font-bold text-slate-900">{lead.name}</h2>
+                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
                   {formatCurrency(lead.value, currencySymbol)}
                 </span>
               </div>
               {lead.company && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                  <Building className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                  <Building className="h-3.5 w-3.5 text-slate-400" />
                   <span>{lead.company}</span>
                 </div>
               )}
@@ -164,21 +164,21 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => onEditLead(lead)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
                 title="Edit Lead"
               >
                 <Edit2 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onDeleteLead(lead._id)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-colors"
+                className="rounded-lg p-2 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                 title="Delete Lead"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
               <button
                 onClick={onClose}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -186,12 +186,12 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
           </div>
 
           {/* Drawer Body */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs text-slate-300">
+          <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs text-slate-700">
             {/* Stage Selector Bar */}
-            <div className="rounded-xl border border-slate-800 bg-slate-800/40 p-3 space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <span>Pipeline Stage</span>
-                <span className="text-indigo-400">Click to advance</span>
+                <span className="text-blue-600 font-semibold">Click to advance</span>
               </div>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {(['new', 'contacted', 'meeting', 'proposal', 'won', 'lost'] as LeadStage[]).map((st) => (
@@ -201,11 +201,11 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                     className={`rounded-lg py-1.5 px-2 text-[10px] font-bold capitalize transition-all ${
                       lead.stage === st
                         ? st === 'won'
-                          ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
+                          ? 'bg-emerald-600 text-white shadow-md'
                           : st === 'lost'
                           ? 'bg-rose-600 text-white'
-                          : 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                          : 'bg-blue-600 text-white shadow-md'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     {st}
@@ -218,14 +218,14 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <a
                 href={`tel:${lead.phone}`}
-                className="flex items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-950/30 p-3 font-semibold text-cyan-300 hover:bg-cyan-900/40 transition-all shadow-md shadow-cyan-950/50"
+                className="flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50/70 p-3 font-bold text-blue-700 hover:bg-blue-100 transition-all shadow-xs"
               >
                 <PhoneCall className="h-4 w-4" />
                 <span>Call {lead.phone}</span>
               </a>
               <button
                 onClick={handleLaunchWhatsApp}
-                className="flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 p-3 font-semibold text-emerald-300 hover:bg-emerald-900/40 transition-all shadow-md shadow-emerald-950/50"
+                className="flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 font-bold text-emerald-700 hover:bg-emerald-100 transition-all shadow-xs"
               >
                 <MessageSquare className="h-4 w-4" />
                 <span>Open WhatsApp</span>
@@ -233,47 +233,47 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
             </div>
 
             {/* WhatsApp Template Box */}
-            <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-4 space-y-2.5">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-emerald-400 text-xs flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" /> 1-Click WhatsApp Message
+                <span className="font-bold text-emerald-800 text-xs flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-600" /> 1-Click WhatsApp Message
                 </span>
-                <span className="text-[10px] text-emerald-500/80">Auto-filled template</span>
+                <span className="text-[10px] text-emerald-600 font-semibold">Auto-filled template</span>
               </div>
               <textarea
                 rows={3}
                 value={waMessage}
                 onChange={(e) => setWaMessage(e.target.value)}
-                className="w-full rounded-lg border border-emerald-500/30 bg-slate-900/80 p-2.5 text-xs text-slate-200 focus:border-emerald-400 focus:outline-none"
+                className="w-full rounded-xl border border-emerald-300 bg-white p-2.5 text-xs text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 focus:outline-none"
               />
               <button
                 onClick={handleLaunchWhatsApp}
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-600/30 hover:bg-emerald-500 transition-all"
+                className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-md hover:bg-emerald-700 transition-all"
               >
                 <Send className="h-3.5 w-3.5" /> Send via WhatsApp Web / App
               </button>
             </div>
 
             {/* Custom Fields & Attributes */}
-            <div className="rounded-xl border border-slate-800 bg-slate-800/30 p-4 space-y-3">
-              <h4 className="font-bold text-white text-xs uppercase tracking-wider text-slate-400">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+              <h4 className="font-bold text-slate-700 text-xs uppercase tracking-wider">
                 Lead Attributes & Custom Fields
               </h4>
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-lg bg-slate-850 p-2.5 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Lead Source</span>
-                  <span className="font-semibold text-slate-200 capitalize">{lead.source}</span>
+                <div className="rounded-xl bg-white p-2.5 border border-slate-200 shadow-xs">
+                  <span className="text-[10px] text-slate-500 font-medium block">Lead Source</span>
+                  <span className="font-bold text-slate-800 capitalize">{lead.source}</span>
                 </div>
-                <div className="rounded-lg bg-slate-850 p-2.5 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Priority</span>
-                  <span className="font-semibold text-slate-200 capitalize">{lead.priority}</span>
+                <div className="rounded-xl bg-white p-2.5 border border-slate-200 shadow-xs">
+                  <span className="text-[10px] text-slate-500 font-medium block">Priority</span>
+                  <span className="font-bold text-slate-800 capitalize">{lead.priority}</span>
                 </div>
 
                 {/* Dynamic custom fields */}
                 {currentOrg?.customFields?.map((field) => (
-                  <div key={field.id} className="rounded-lg bg-slate-850 p-2.5 border border-slate-800">
-                    <span className="text-[10px] text-indigo-400 block font-medium">{field.label}</span>
-                    <span className="font-semibold text-slate-200">
+                  <div key={field.id} className="rounded-xl bg-white p-2.5 border border-slate-200 shadow-xs">
+                    <span className="text-[10px] text-blue-600 block font-semibold">{field.label}</span>
+                    <span className="font-bold text-slate-800">
                       {lead.customFields?.[field.key] || 'Not specified'}
                     </span>
                   </div>
@@ -282,8 +282,8 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
             </div>
 
             {/* Activity Logger Form */}
-            <div className="rounded-xl border border-slate-800 bg-slate-850 p-4 space-y-3">
-              <h4 className="font-bold text-white text-xs">Log Call / Meeting / Note</h4>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">
+              <h4 className="font-bold text-slate-900 text-xs">Log Call / Meeting / Note</h4>
               <form onSubmit={handleAddActivity} className="space-y-3">
                 <div className="flex gap-2">
                   {(['note', 'call', 'whatsapp', 'meeting'] as const).map((type) => (
@@ -291,10 +291,10 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                       key={type}
                       type="button"
                       onClick={() => setActivityType(type)}
-                      className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold capitalize border transition-all ${
+                      className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold capitalize border transition-all ${
                         activityType === type
-                          ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/50'
-                          : 'bg-slate-800 text-slate-400 border-slate-700/60 hover:text-white'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
                       {type}
@@ -307,22 +307,22 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                   placeholder="What was discussed? Next steps..."
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-900 p-2.5 text-xs text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none"
                 />
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
-                    <label className="text-[10px] text-slate-400 block mb-0.5">Schedule Next Follow-Up:</label>
+                    <label className="text-[10px] text-slate-500 font-semibold block mb-0.5">Schedule Next Follow-Up:</label>
                     <input
                       type="date"
                       value={followUpDate}
                       onChange={(e) => setFollowUpDate(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 text-xs text-white focus:border-indigo-500 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-800 focus:border-blue-600 focus:outline-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={isSubmittingNote}
-                    className="self-end rounded-lg bg-indigo-600 px-4 py-1.5 font-semibold text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50 text-xs"
+                    className="self-end rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-md hover:bg-blue-700 transition-all disabled:opacity-50 text-xs"
                   >
                     Save Note
                   </button>
@@ -332,11 +332,11 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
 
             {/* Activity History Timeline */}
             <div className="space-y-3">
-              <h4 className="font-bold text-slate-400 text-xs uppercase tracking-wider">Activity History</h4>
+              <h4 className="font-bold text-slate-500 text-xs uppercase tracking-wider">Activity History</h4>
               {isLoadingActivities ? (
-                <div className="py-4 text-center text-slate-500">Loading history...</div>
+                <div className="py-4 text-center text-slate-400">Loading history...</div>
               ) : activities.length === 0 ? (
-                <div className="py-6 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+                <div className="py-6 text-center text-slate-400 border border-dashed border-slate-200 rounded-xl">
                   No activity logged yet. Add a note above!
                 </div>
               ) : (
@@ -344,16 +344,16 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({
                   {activities.map((act) => (
                     <div
                       key={act._id}
-                      className="rounded-lg border border-slate-800 bg-slate-800/40 p-3 space-y-1"
+                      className="rounded-xl border border-slate-200 bg-white p-3 space-y-1 shadow-xs"
                     >
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-bold text-indigo-300 capitalize">{act.type}</span>
-                        <span className="text-slate-500">{formatRelativeTime(act.createdAt)}</span>
+                        <span className="font-bold text-blue-700 capitalize">{act.type}</span>
+                        <span className="text-slate-400 font-medium">{formatRelativeTime(act.createdAt)}</span>
                       </div>
-                      <p className="text-xs text-slate-200 leading-relaxed">{act.content}</p>
+                      <p className="text-xs text-slate-700 leading-relaxed">{act.content}</p>
                       {act.followUpDate && (
-                        <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-400">
-                          <Calendar className="h-3 w-3" />
+                        <div className="mt-1 flex items-center gap-1 text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex">
+                          <Calendar className="h-3 w-3 text-amber-600" />
                           <span>Follow-up scheduled: {formatDate(act.followUpDate)}</span>
                         </div>
                       )}

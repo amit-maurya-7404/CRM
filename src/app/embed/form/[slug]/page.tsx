@@ -117,9 +117,9 @@ export default function EmbedFormPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 text-slate-400">
-        <div className="flex items-center gap-2.5 text-xs font-medium">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 text-slate-500">
+        <div className="flex items-center gap-2.5 text-xs font-semibold text-blue-700">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
           <span>Loading secure form...</span>
         </div>
       </div>
@@ -128,15 +128,15 @@ export default function EmbedFormPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/90 p-8 text-center shadow-2xl backdrop-blur-xl animate-in zoom-in-95">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-4">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xl animate-in zoom-in-95">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-200 mb-4">
             <CheckCircle2 className="h-7 w-7" />
           </div>
-          <h2 className="text-xl font-bold text-white">Inquiry Received!</h2>
-          <p className="mt-2 text-xs text-slate-300 leading-relaxed">
+          <h2 className="text-xl font-bold text-slate-900">Inquiry Received!</h2>
+          <p className="mt-2 text-xs text-slate-600 leading-relaxed font-medium">
             Thank you, <strong>{name}</strong>! Your details have been submitted to{' '}
-            <span className="text-indigo-400 font-semibold">{org?.name || 'our team'}</span>. One of our specialists will reach out to you on WhatsApp / phone shortly.
+            <span className="text-blue-700 font-bold">{org?.name || 'our team'}</span>. One of our specialists will reach out to you on WhatsApp / phone shortly.
           </p>
           <button
             onClick={() => {
@@ -147,7 +147,7 @@ export default function EmbedFormPage() {
               setCustomFields({});
               setNotes('');
             }}
-            className="mt-6 rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-all"
+            className="mt-6 rounded-xl bg-blue-50 border border-blue-200 px-4 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-600 hover:text-white transition-all shadow-xs"
           >
             Submit Another Inquiry
           </button>
@@ -157,26 +157,26 @@ export default function EmbedFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 sm:p-6 antialiased">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900/95 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 antialiased">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/50">
         {/* Form Title & Company Badge */}
-        <div className="border-b border-slate-800 pb-5 mb-5 text-left">
+        <div className="border-b border-slate-100 pb-5 mb-5 text-left">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-indigo-400 border border-indigo-500/20">
+            <span className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
               {org?.industry || 'Customer Inquiry'}
             </span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-white mt-1.5">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1.5">
             {org?.name ? `Inquire with ${org.name}` : 'Get in Touch'}
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             Fill in your details below and our team will connect with you with pricing and custom options.
           </p>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 font-medium">
             {errorMessage}
           </div>
         )}
@@ -186,8 +186,8 @@ export default function EmbedFormPage() {
           {/* Name & Phone */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5 text-indigo-400" /> Full Name <span className="text-rose-400">*</span>
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-blue-600" /> Full Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -195,13 +195,13 @@ export default function EmbedFormPage() {
                 placeholder="e.g. Rahul Sharma"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5 text-indigo-400" /> Phone / WhatsApp <span className="text-rose-400">*</span>
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-blue-600" /> Phone / WhatsApp <span className="text-rose-500">*</span>
               </label>
               <input
                 type="tel"
@@ -209,47 +209,47 @@ export default function EmbedFormPage() {
                 placeholder="e.g. 9876543210"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5 text-indigo-400" /> Email Address (Optional)
+            <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+              <Mail className="h-3.5 w-3.5 text-blue-600" /> Email Address (Optional)
             </label>
             <input
               type="email"
               placeholder="e.g. rahul@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 focus:outline-none transition-all"
             />
           </div>
 
           {/* Dynamic Industry Custom Fields */}
           {org?.customFields && org.customFields.length > 0 && (
-            <div className="space-y-3.5 pt-2 border-t border-slate-800/80">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-indigo-400">
+            <div className="space-y-3.5 pt-2 border-t border-slate-100">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
                 {org.industry} Details
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {org.customFields.map((field) => (
                   <div key={field.id} className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">
-                      {field.label} {field.required && <span className="text-rose-400">*</span>}
+                    <label className="text-xs font-semibold text-slate-700">
+                      {field.label} {field.required && <span className="text-rose-500">*</span>}
                     </label>
                     {field.type === 'select' ? (
                       <select
                         required={field.required}
                         value={customFields[field.key] || ''}
                         onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-indigo-500 focus:outline-none transition-all"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:border-blue-600 focus:outline-none transition-all"
                       >
                         <option value="">Select {field.label}...</option>
                         {field.options?.map((opt) => (
-                          <option key={opt} value={opt} className="bg-slate-900 text-white">
+                          <option key={opt} value={opt} className="bg-white text-slate-900">
                             {opt}
                           </option>
                         ))}
@@ -260,7 +260,7 @@ export default function EmbedFormPage() {
                         required={field.required}
                         value={customFields[field.key] || ''}
                         onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-indigo-500 focus:outline-none transition-all"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:border-blue-600 focus:outline-none transition-all"
                       />
                     ) : (
                       <input
@@ -269,7 +269,7 @@ export default function EmbedFormPage() {
                         placeholder={`Enter ${field.label}`}
                         value={customFields[field.key] || ''}
                         onChange={(e) => handleCustomFieldChange(field.key, e.target.value)}
-                        className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition-all"
                       />
                     )}
                   </div>
@@ -280,7 +280,7 @@ export default function EmbedFormPage() {
 
           {/* Notes / Special Requests */}
           <div className="space-y-1.5 pt-1">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-semibold text-slate-700">
               Special Message or Requirements (Optional)
             </label>
             <textarea
@@ -288,7 +288,7 @@ export default function EmbedFormPage() {
               placeholder="Any specific questions or preferences..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none transition-all resize-none"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none transition-all resize-none"
             />
           </div>
 
@@ -296,7 +296,7 @@ export default function EmbedFormPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/25 hover:from-indigo-500 hover:to-violet-500 active:scale-[0.98] transition-all disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50"
           >
             {isSubmitting ? (
               <>
@@ -313,8 +313,8 @@ export default function EmbedFormPage() {
         </form>
 
         {/* Security badge */}
-        <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 border-t border-slate-800/80 pt-3">
-          <Lock className="h-3 w-3 text-indigo-400" />
+        <div className="mt-5 flex items-center justify-center gap-1.5 text-[11px] text-slate-500 border-t border-slate-100 pt-3 font-medium">
+          <Lock className="h-3 w-3 text-blue-600" />
           <span>Powered by Zyntex CRM • Direct Lead Synchronization</span>
         </div>
       </div>

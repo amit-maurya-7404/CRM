@@ -15,6 +15,20 @@ const CustomFieldSchema = new Schema(
   { _id: false }
 );
 
+const CustomModuleSchema = new Schema(
+  {
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    slug: { type: String, required: true },
+    icon: { type: String, default: 'Layers' },
+    description: { type: String },
+    fields: [CustomFieldSchema],
+    records: [{ type: Schema.Types.Mixed, default: [] }],
+    createdAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { _id: false }
+);
+
 const OrganizationSchema = new Schema<OrganizationDocument>(
   {
     name: { type: String, required: true, trim: true },
@@ -23,9 +37,46 @@ const OrganizationSchema = new Schema<OrganizationDocument>(
     currency: { type: String, default: 'INR' },
     currencySymbol: { type: String, default: '₹' },
     customFields: [CustomFieldSchema],
+    modules: [CustomModuleSchema],
     whatsappTemplate: {
       type: String,
       default: 'Hi {{name}}, thanks for reaching out to {{company}}! How can we help you today?',
+    },
+    apiKey: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
+    apiKeyCreatedAt: {
+      type: String,
+    },
+    ownerEmail: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+    adminEmail: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+    adminPassword: {
+      type: String,
+    },
+    plan: {
+      type: String,
+      enum: ['starter', 'professional', 'enterprise'],
+      default: 'professional',
+    },
+    status: {
+      type: String,
+      enum: ['active', 'suspended'],
+      default: 'active',
+    },
+    moduleLayouts: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   {
