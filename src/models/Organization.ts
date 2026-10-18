@@ -31,6 +31,7 @@ const CustomModuleSchema = new Schema(
 
 const OrganizationSchema = new Schema<OrganizationDocument>(
   {
+    _id: { type: String },
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     industry: { type: String, default: 'General' },

@@ -5,6 +5,7 @@ export interface LeadDocument extends Omit<ILead, '_id'>, Document {}
 
 const LeadSchema = new Schema<LeadDocument>(
   {
+    _id: { type: String },
     orgId: { type: String, required: true, index: true },
     name: { type: String, required: true, trim: true },
     company: { type: String, trim: true },
