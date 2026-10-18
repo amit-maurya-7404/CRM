@@ -20,7 +20,8 @@ interface TenantContextType {
   createOrganization: (name: string, industry: string, customFields?: CustomFieldDefinition[]) => Promise<Organization | null>;
   updateOrgSettings: (update: Partial<Organization>) => Promise<boolean>;
   refreshOrganizations: () => Promise<void>;
-  login: (email: string, password?: string, orgId?: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password?: string, orgId?: string) => Promise<{ success: boolean; organization?: Organization; user?: User; error?: string }>;
+  setCurrentOrgBySlug: (slug: string) => Organization | null;
   registerBusiness: (data: {
     orgName: string;
     industry: string;
@@ -104,13 +105,29 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper to change current organization by slug or id and persist
+  const setCurrentOrgBySlug = useCallback((slugOrId: string): Organization | null => {
+    if (!slugOrId) return null;
+    const org = organizations.find((o) => o.slug === slugOrId || o._id === slugOrId);
+    if (org) {
+      setCurrentOrg(org);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('active_org_id', org._id);
+        localStorage.setItem('active_org_slug', org.slug);
+      }
+      return org;
+    }
+    return null;
+  }, [organizations]);
+
   const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch('/api/organizations');
       const json = await res.json();
       if (json.success && json.data.length > 0) {
-        setOrganizations(json.data);
+        const orgsList: Organization[] = json.data;
+        setOrganizations(orgsList);
 
         // Check if user has explicitly logged out
         const isLoggedOut = typeof window !== 'undefined' ? localStorage.getItem('zyntex_is_logged_out') : null;
@@ -120,19 +137,60 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Check saved user session
+        // Check path slug from URL (e.g., /travel-tribes)
+        let pathSlug: string | null = null;
+        if (typeof window !== 'undefined') {
+          const pathSegments = window.location.pathname.split('/').filter(Boolean);
+          if (pathSegments.length > 0 && !['super-admin', 'admin', 'api', 'embed'].includes(pathSegments[0])) {
+            pathSlug = pathSegments[0];
+          }
+        }
+
+        // Check saved user session and saved active org
         const savedUserJson = typeof window !== 'undefined' ? localStorage.getItem('active_user_data') : null;
+        const savedOrgSlug = typeof window !== 'undefined' ? localStorage.getItem('active_org_slug') : null;
+        const savedOrgId = typeof window !== 'undefined' ? localStorage.getItem('active_org_id') : null;
+
         if (savedUserJson) {
           try {
             const parsedUser = JSON.parse(savedUserJson);
             setCurrentUser(parsedUser);
-            const userOrg = json.data.find((o: Organization) => o._id === parsedUser.orgId) || json.data[0];
-            setCurrentOrg(userOrg);
+
+            // Match tenant org in order of priority:
+            // 1. URL Path slug (if directly on company page like /travel-tribes)
+            // 2. Saved active org slug
+            // 3. Saved active org id
+            // 4. User's assigned orgId or org slug
+            const matchedOrg =
+              (pathSlug ? orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug) : null) ||
+              (savedOrgSlug ? orgsList.find((o) => o.slug === savedOrgSlug) : null) ||
+              (savedOrgId ? orgsList.find((o) => o._id === savedOrgId) : null) ||
+              orgsList.find((o) => o._id === parsedUser.orgId || o.slug === parsedUser.orgId) ||
+              null;
+
+            if (matchedOrg) {
+              setCurrentOrg(matchedOrg);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('active_org_id', matchedOrg._id);
+                localStorage.setItem('active_org_slug', matchedOrg.slug);
+              }
+            } else if (pathSlug) {
+              const pathOrg = orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug);
+              if (pathOrg) {
+                setCurrentOrg(pathOrg);
+              }
+            }
           } catch {
             setCurrentUser(null);
           }
         } else {
-          // No active session: require user to sign in
+          // No active user session
+          if (pathSlug) {
+            const pathOrg = orgsList.find((o) => o.slug === pathSlug || o._id === pathSlug);
+            if (pathOrg) {
+              setCurrentOrg(pathOrg);
+            }
+          }
           setCurrentUser(null);
         }
       }
@@ -148,11 +206,12 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [fetchOrganizations]);
 
   const switchOrganization = (orgId: string) => {
-    const org = organizations.find((o) => o._id === orgId);
+    const org = organizations.find((o) => o._id === orgId || o.slug === orgId);
     if (org) {
       setCurrentOrg(org);
       if (typeof window !== 'undefined') {
         localStorage.setItem('active_org_id', org._id);
+        localStorage.setItem('active_org_slug', org.slug);
         localStorage.removeItem('zyntex_is_logged_out');
       }
 
@@ -185,15 +244,20 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         isPlatformOwner: true,
         phone: '+919876500001',
       };
-      if (!currentOrg && organizations.length > 0) {
-        setCurrentOrg(organizations[0]);
+      const orgToUse = currentOrg || organizations[0] || null;
+      if (orgToUse) {
+        setCurrentOrg(orgToUse);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('active_org_id', orgToUse._id);
+          localStorage.setItem('active_org_slug', orgToUse.slug);
+        }
       }
       setCurrentUser(superAdminUser);
       if (typeof window !== 'undefined') {
         localStorage.setItem('active_user_data', JSON.stringify(superAdminUser));
         localStorage.removeItem('zyntex_is_logged_out');
       }
-      return { success: true };
+      return { success: true, organization: orgToUse || undefined, user: superAdminUser };
     }
 
     // 1. Try real authentication endpoint
@@ -211,11 +275,12 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
         if (typeof window !== 'undefined') {
           localStorage.setItem('active_org_id', organization._id);
+          localStorage.setItem('active_org_slug', organization.slug);
           localStorage.setItem('active_user_data', JSON.stringify(user));
           localStorage.removeItem('zyntex_is_logged_out');
         }
         await fetchOrganizations();
-        return { success: true };
+        return { success: true, organization, user };
       } else {
         return { success: false, error: json.error || 'Invalid email or password.' };
       }
@@ -233,10 +298,11 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
         if (typeof window !== 'undefined') {
           localStorage.setItem('active_org_id', matchedOrg._id);
+          localStorage.setItem('active_org_slug', matchedOrg.slug);
           localStorage.setItem('active_user_data', JSON.stringify(demoUser));
           localStorage.removeItem('zyntex_is_logged_out');
         }
-        return { success: true };
+        return { success: true, organization: matchedOrg, user: demoUser };
       }
     }
 
@@ -244,7 +310,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loginAsTenantCompany = (orgId: string) => {
-    const org = organizations.find((o) => o._id === orgId);
+    const org = organizations.find((o) => o._id === orgId || o.slug === orgId);
     if (!org) return false;
     const adminEmail = org.adminEmail || org.ownerEmail || `admin@${org.slug}.com`;
     const user: User = DEMO_USERS[org._id] || {
@@ -259,6 +325,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(user);
     if (typeof window !== 'undefined') {
       localStorage.setItem('active_org_id', org._id);
+      localStorage.setItem('active_org_slug', org.slug);
       localStorage.setItem('active_user_data', JSON.stringify(user));
       localStorage.removeItem('zyntex_is_logged_out');
     }
@@ -666,6 +733,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         updateOrgSettings,
         refreshOrganizations,
         login,
+        setCurrentOrgBySlug,
         registerBusiness,
         regenerateApiKey,
         logout,

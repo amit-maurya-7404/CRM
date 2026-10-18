@@ -129,14 +129,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ onOpenWorkspace 
     return `🎉 *Welcome to Zyntex CRM - Client Portal Access*
 --------------------------------------------------
 🏢 *Company Name:* ${org.name}
-🌐 *CRM Portal URL:* ${appUrl}
+🌐 *CRM Portal URL:* ${appUrl}/${org.slug}
 📧 *Login Email:* ${email}
 🔑 *Password:* ${pass}
 ⚡ *Industry Setup:* ${org.industry}
 🛡️ *Workspace ID:* ${org.slug} (Isolated Multi-Tenant)
 --------------------------------------------------
 Your CRM workspace is pre-configured with custom lead forms, deals pipeline, and booking automation.
-Please log in and update your profile password in settings!`;
+Please log in with the credentials above to launch your dedicated CRM workspace.`;
   };
 
   // Filter organizations

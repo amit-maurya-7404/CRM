@@ -604,7 +604,7 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        const org = await OrganizationModel.findOne({ $or: [{ _id: id }, { slug: id }] }).lean();
+        const org = await OrganizationModel.findOne({ $or: [{ _id: id }, { slug: id }] } as any).lean();
         if (org) {
           let modules = org.modules;
           if (!modules || modules.length === 0) {
@@ -651,7 +651,7 @@ export const DataService = {
     if (mongo) {
       try {
         const updated = await OrganizationModel.findOneAndUpdate(
-          { $or: [{ _id: orgId }, { slug: orgId }] },
+          { $or: [{ _id: orgId }, { slug: orgId }] } as any,
           { $set: update },
           { new: true }
         ).lean();
@@ -675,7 +675,7 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        await OrganizationModel.deleteOne({ $or: [{ _id: id }, { slug: id }] });
+        await OrganizationModel.deleteOne({ $or: [{ _id: id }, { slug: id }] } as any);
         await UserModel.deleteMany({ orgId: id });
         return true;
       } catch (err) {
@@ -701,10 +701,16 @@ export const DataService = {
       { id: 'f_b_7', key: 'status', label: 'Booking Status', type: 'select', options: ['Advance Received', 'Confirmed', 'Completed'] },
     ];
 
+    const cleanSlug = (data.slug || data.name || 'new-org')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || `org-${Date.now()}`;
+
     const newOrg: Organization = {
       _id: `org_${Date.now()}`,
       name: data.name || 'New Organization',
-      slug: (data.name || 'new-org').toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      slug: cleanSlug,
       industry: data.industry || 'General Business',
       currency: data.currency || 'INR',
       currencySymbol: data.currencySymbol || '₹',
@@ -751,7 +757,7 @@ export const DataService = {
     if (mongo) {
       try {
         const updated = await OrganizationModel.findOneAndUpdate(
-          { $or: [{ _id: id }, { slug: id }] },
+          { $or: [{ _id: id }, { slug: id }] } as any,
           { $set: update },
           { new: true }
         ).lean();

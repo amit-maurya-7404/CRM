@@ -1,11 +1,13 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { Lead as ILead } from '@/types';
 
-export interface LeadDocument extends Omit<ILead, '_id'>, Document {}
+export interface LeadDocument extends Omit<ILead, '_id'>, Document {
+  _id: any;
+}
 
 const LeadSchema = new Schema<LeadDocument>(
   {
-    _id: { type: String },
+    _id: { type: String as any },
     orgId: { type: String, required: true, index: true },
     name: { type: String, required: true, trim: true },
     company: { type: String, trim: true },

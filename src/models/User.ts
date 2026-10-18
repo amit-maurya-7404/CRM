@@ -1,11 +1,13 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { User as IUser } from '@/types';
 
-export interface UserDocument extends Omit<IUser, '_id'>, Document {}
+export interface UserDocument extends Omit<IUser, '_id'>, Document {
+  _id: any;
+}
 
 const UserSchema = new Schema<UserDocument>(
   {
-    _id: { type: String },
+    _id: { type: String as any },
     orgId: { type: String, required: true, index: true },
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, lowercase: true, trim: true },

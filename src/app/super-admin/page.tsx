@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 function SuperAdminConsole() {
-  const { currentOrg, loginAsTenantCompany } = useTenant();
+  const { currentOrg, loginAsTenantCompany, organizations } = useTenant();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [authKey, setAuthKey] = useState<string>('');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -65,7 +65,12 @@ function SuperAdminConsole() {
 
   const handleOpenWorkspace = (orgId: string) => {
     loginAsTenantCompany(orgId);
-    window.location.href = '/';
+    const org = organizations.find((o) => o._id === orgId || o.slug === orgId);
+    if (org?.slug) {
+      window.location.href = `/${org.slug}`;
+    } else {
+      window.location.href = '/';
+    }
   };
 
   // 1. MASTER AUTHENTICATION GATE (Only owner with key can unlock)

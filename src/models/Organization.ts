@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 import { Organization as IOrganization } from '@/types';
 
-export interface OrganizationDocument extends Omit<IOrganization, '_id'>, Document {}
+export interface OrganizationDocument extends Omit<IOrganization, '_id'>, Document {
+  _id: any;
+}
 
 const CustomFieldSchema = new Schema(
   {
@@ -31,7 +33,7 @@ const CustomModuleSchema = new Schema(
 
 const OrganizationSchema = new Schema<OrganizationDocument>(
   {
-    _id: { type: String },
+    _id: { type: String as any },
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     industry: { type: String, default: 'General' },
