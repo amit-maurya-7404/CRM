@@ -95,11 +95,24 @@ export const DataService = {
     if (mongo) {
       try {
         const orgs = await OrganizationModel.find({}).sort({ createdAt: -1 }).lean();
-        return (orgs || []).map((o) => ({
-          ...o,
-          _id: o._id.toString(),
-          modules: o.modules || [],
-        })) as unknown as Organization[];
+        const results: Organization[] = [];
+        for (const o of orgs || []) {
+          let currentKey = o.apiKey;
+          if (!currentKey || currentKey === 'zyn_live_api_key' || currentKey.length < 20) {
+            currentKey = generateApiKey('zyn_live');
+            OrganizationModel.updateOne(
+              { _id: o._id },
+              { $set: { apiKey: currentKey, apiKeyCreatedAt: new Date().toISOString() } }
+            ).catch((e) => console.error('Error auto-healing API key in DB:', e));
+          }
+          results.push({
+            ...o,
+            _id: o._id.toString(),
+            apiKey: currentKey,
+            modules: o.modules || [],
+          } as unknown as Organization);
+        }
+        return results;
       } catch (err) {
         console.error('Error fetching orgs from MongoDB:', err);
       }
@@ -113,19 +126,36 @@ export const DataService = {
       try {
         const org = await OrganizationModel.findOne({ $or: [{ _id: id }, { slug: id }] } as any).lean();
         if (org) {
-          return { ...org, _id: org._id.toString(), modules: org.modules || [] } as unknown as Organization;
+          let currentKey = org.apiKey;
+          if (!currentKey || currentKey === 'zyn_live_api_key' || currentKey.length < 20) {
+            currentKey = generateApiKey('zyn_live');
+            OrganizationModel.updateOne(
+              { _id: org._id },
+              { $set: { apiKey: currentKey, apiKeyCreatedAt: new Date().toISOString() } }
+            ).catch((e) => console.error('Error auto-healing API key in DB:', e));
+          }
+          return {
+            ...org,
+            _id: org._id.toString(),
+            apiKey: currentKey,
+            modules: org.modules || [],
+          } as unknown as Organization;
         }
       } catch {
         // Fallback
       }
     }
     const memOrg = mockOrgs.find((o) => o._id === id || o.slug === id) || null;
+    if (memOrg && (!memOrg.apiKey || memOrg.apiKey === 'zyn_live_api_key' || memOrg.apiKey.length < 20)) {
+      memOrg.apiKey = generateApiKey('zyn_live');
+    }
     return memOrg;
   },
 
   async getOrganizationByApiKey(apiKey: string): Promise<Organization | null> {
     if (!apiKey) return null;
     const trimmedKey = apiKey.trim();
+    if (trimmedKey === 'zyn_live_api_key') return null; // Reject placeholder
     const mongo = await connectToDatabase();
     if (mongo) {
       try {

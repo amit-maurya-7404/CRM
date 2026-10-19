@@ -64,12 +64,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   if (!isOpen || !currentUser) return null;
 
-  const currentApiKey = currentOrg?.apiKey || 'zyn_live_api_key';
+  const currentApiKey = currentOrg?.apiKey || '';
+
+  // Auto-generate genuine API key if missing from currentOrg
+  React.useEffect(() => {
+    if (isOpen && currentOrg && (!currentOrg.apiKey || currentOrg.apiKey === 'zyn_live_api_key')) {
+      regenerateApiKey();
+    }
+  }, [isOpen, currentOrg, regenerateApiKey]);
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   const apiEndpoint = `${baseUrl}/api/v1/capture-lead`;
 
   const copyToClipboard = (text: string, identifier: string) => {
+    if (!text || text === 'zyn_live_api_key') return;
     navigator.clipboard.writeText(text);
     setCopiedKey(identifier);
     setTimeout(() => setCopiedKey(null), 2000);
@@ -107,6 +115,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   const handleTestApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentApiKey) {
+      alert('Please wait for the live API key to load or click Regenerate Key.');
+      return;
+    }
     setIsTestingKey(true);
     setTestResult(null);
 
@@ -427,22 +439,28 @@ curl -X POST "${apiEndpoint}" \\
               {/* API Key String with Show/Hide & Copy */}
               <div className="mt-3.5 flex items-center gap-2">
                 <div className="relative flex-1 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 font-mono text-xs text-blue-900 font-bold truncate select-all shadow-xs">
-                  {showApiKey ? currentApiKey : currentApiKey.replace(/^(.{12})(.*)(.{4})$/, '$1••••••••••••••••$3')}
+                  {currentApiKey ? (
+                    showApiKey ? currentApiKey : currentApiKey.replace(/^(.{10})(.*)(.{4})$/, '$1••••••••••••••••$3')
+                  ) : (
+                    <span className="text-slate-400 italic font-sans font-normal">Loading API Key from MongoDB...</span>
+                  )}
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setShowApiKey(!showApiKey)}
+                  disabled={!currentApiKey}
                   title={showApiKey ? 'Hide API Key' : 'Reveal API Key'}
-                  className="rounded-xl border border-slate-300 bg-white p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-xs"
+                  className="rounded-xl border border-slate-300 bg-white p-2.5 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-xs disabled:opacity-50"
                 >
                   {showApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => copyToClipboard(currentApiKey, 'api_key')}
-                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all"
+                  onClick={() => currentApiKey && copyToClipboard(currentApiKey, 'api_key')}
+                  disabled={!currentApiKey}
+                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {copiedKey === 'api_key' ? (
                     <>

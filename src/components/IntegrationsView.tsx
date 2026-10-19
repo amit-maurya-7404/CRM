@@ -37,7 +37,7 @@ export const IntegrationsView: React.FC = () => {
 
   const orgSlug = currentOrg?.slug || 'workspace';
   const orgName = currentOrg?.name || 'Your Company';
-  const apiKey = currentOrg?.apiKey || 'zyn_live_api_key';
+  const apiKey = currentOrg?.apiKey || '';
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
   // Embed URL
