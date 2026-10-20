@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Organization, User, Lead, Activity, DashboardStats, LeadStage, LeadPriority, LeadSource, CustomFieldDefinition } from '@/types';
 import { connectToDatabase, isMongoConfigured } from './mongodb';
 import { OrganizationModel } from '@/models/Organization';
