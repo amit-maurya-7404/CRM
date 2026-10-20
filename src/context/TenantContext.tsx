@@ -106,12 +106,21 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const fetchOrganizations = useCallback(async () => {
     try {
       setIsLoading(true);
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        Pragma: 'no-cache',
+      };
+      if (typeof window !== 'undefined') {
+        const savedAuth = sessionStorage.getItem('zyntex_master_admin_auth');
+        const savedUserJson = localStorage.getItem('active_user_data');
+        if (savedAuth === 'authenticated' || (savedUserJson && savedUserJson.includes('"super_admin"'))) {
+          headers['x-zyntex-auth-role'] = 'super_admin';
+        }
+      }
+
       const res = await fetch(`/api/organizations?_t=${Date.now()}`, {
         cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          Pragma: 'no-cache',
-        },
+        headers,
       });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {

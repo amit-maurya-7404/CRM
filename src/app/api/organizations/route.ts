@@ -10,11 +10,22 @@ const noCacheHeaders = {
   'Expires': '0',
 };
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const isSuperAdmin = req.headers.get('x-zyntex-auth-role') === 'super_admin';
     const orgs = await DataService.getOrganizations();
+
+    // Security: Strip adminPassword for all non-superadmin callers
+    const safeOrgs = orgs.map((o) => {
+      const copy: any = { ...o };
+      if (!isSuperAdmin) {
+        delete copy.adminPassword;
+      }
+      return copy;
+    });
+
     return NextResponse.json(
-      { success: true, data: orgs },
+      { success: true, data: safeOrgs },
       { headers: noCacheHeaders }
     );
   } catch (error: any) {
@@ -36,8 +47,11 @@ export async function POST(req: Request) {
       );
     }
     const newOrg = await DataService.createOrganization(body);
+    const safeOrg: any = { ...newOrg };
+    delete safeOrg.adminPassword;
+
     return NextResponse.json(
-      { success: true, data: newOrg },
+      { success: true, data: safeOrg },
       { status: 201, headers: noCacheHeaders }
     );
   } catch (error: any) {

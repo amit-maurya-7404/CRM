@@ -23,8 +23,13 @@ export async function GET(
         { status: 404, headers: noCacheHeaders }
       );
     }
+    const isSuperAdmin = request.headers.get('x-zyntex-auth-role') === 'super_admin';
+    const safeOrg: any = { ...org };
+    if (!isSuperAdmin) {
+      delete safeOrg.adminPassword;
+    }
     return NextResponse.json(
-      { success: true, data: org },
+      { success: true, data: safeOrg },
       { headers: noCacheHeaders }
     );
   } catch (error) {
@@ -49,8 +54,13 @@ export async function PUT(
         { status: 404, headers: noCacheHeaders }
       );
     }
+    const isSuperAdmin = request.headers.get('x-zyntex-auth-role') === 'super_admin';
+    const safeUpdated: any = { ...updated };
+    if (!isSuperAdmin) {
+      delete safeUpdated.adminPassword;
+    }
     return NextResponse.json(
-      { success: true, data: updated },
+      { success: true, data: safeUpdated },
       { headers: noCacheHeaders }
     );
   } catch (error) {

@@ -41,13 +41,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Security: Never leak passwords to the frontend
+    const safeUser: any = result.user ? { ...result.user } : null;
+    if (safeUser) delete safeUser.password;
+
+    const safeOrg: any = result.org ? { ...result.org } : null;
+    if (safeOrg) delete safeOrg.adminPassword;
+
     return NextResponse.json(
       {
         success: true,
         message: 'Business account successfully created!',
         data: {
-          user: result.user,
-          organization: result.org,
+          user: safeUser,
+          organization: safeOrg,
         },
       },
       { status: 201, headers: noCacheHeaders }
