@@ -15,9 +15,56 @@ export function generateApiKey(prefix = 'zyn_live'): string {
   return `${prefix}_${random}`;
 }
 
-// Clean state: No hardcoded dummy organizations, users, or leads.
-// All business workspaces and accounts are created dynamically via Super Admin and persisted directly in MongoDB Atlas.
-const initialOrgs: Organization[] = [];
+// Travel Tribes Pre-Configured Custom Fields for Tours & Travel
+const travelTribesFields: CustomFieldDefinition[] = [
+  { id: 'tf_1', key: 'destination', label: 'Destination / Tour Package', type: 'select', options: ['Dubai 5N/6D', 'Bali Honeymoon', 'Europe Grand Tour', 'Maldives Luxury Villa', 'Ladakh Expedition', 'Goa Weekend'], required: true },
+  { id: 'tf_2', key: 'travelers_count', label: 'Travelers (Pax)', type: 'select', options: ['1 Solo', '2 Couple', '3-5 Family', '6+ Group'] },
+  { id: 'tf_3', key: 'travel_date', label: 'Tentative Travel Date', type: 'date' },
+  { id: 'tf_4', key: 'hotel_category', label: 'Hotel Category', type: 'select', options: ['3 Star Budget', '4 Star Premium', '5 Star Luxury Resort'] },
+];
+
+export const TRAVEL_TRIBES_API_KEY = 'zyn_live_traveltribes_7a9f24b810de93c8';
+
+const initialOrgs: Organization[] = [
+  {
+    _id: 'org_1792344417042',
+    name: 'Travel Tribes',
+    slug: 'travel-tribes',
+    industry: 'Tours and Travel',
+    currency: 'INR',
+    currencySymbol: '₹',
+    apiKey: TRAVEL_TRIBES_API_KEY,
+    apiKeyCreatedAt: '2026-03-01T00:00:00.000Z',
+    ownerEmail: 'traveltribes.in@gmail.com',
+    adminEmail: 'traveltribes.in@gmail.com',
+    adminPassword: 'Travel@123',
+    plan: 'enterprise',
+    status: 'active',
+    customFields: travelTribesFields,
+    modules: [
+      {
+        id: 'mod_bookings',
+        name: 'Bookings',
+        slug: 'bookings',
+        icon: 'CalendarCheck',
+        description: 'Confirmed customer tour packages, vouchers & payments',
+        fields: [
+          { id: 'f_b_1', key: 'booking_ref', label: 'Booking Ref', type: 'text', required: true },
+          { id: 'f_b_2', key: 'customer_name', label: 'Customer Name', type: 'text', required: true },
+          { id: 'f_b_3', key: 'itinerary', label: 'Package / Tour Booked', type: 'text' },
+          { id: 'f_b_4', key: 'travel_date', label: 'Travel Date', type: 'date' },
+          { id: 'f_b_5', key: 'total_amount', label: 'Total Amount (₹)', type: 'number' },
+          { id: 'f_b_6', key: 'advance_paid', label: 'Advance Paid (₹)', type: 'number' },
+          { id: 'f_b_7', key: 'status', label: 'Booking Status', type: 'select', options: ['Advance Received', 'Confirmed', 'Completed'] },
+        ],
+        records: [],
+        createdAt: '2026-03-01T00:00:00.000Z',
+      },
+    ],
+    whatsappTemplate: 'Hi {{name}}, greetings from Travel Tribes! Thank you for inquiring about your holiday trip. How can we assist you with your booking today?',
+    createdAt: '2026-03-01T00:00:00.000Z',
+  },
+];
 
 const initialUsers: User[] = [
   {
@@ -29,6 +76,15 @@ const initialUsers: User[] = [
     isPlatformOwner: true,
     phone: '+919876500001',
     password: 'password123',
+  },
+  {
+    _id: 'u_travel_tribes_owner',
+    orgId: 'org_1792344417042',
+    name: 'Adil Khan',
+    email: 'traveltribes.in@gmail.com',
+    role: 'owner',
+    phone: '+91 99758 22023',
+    password: 'Travel@123',
   },
 ];
 
@@ -96,11 +152,14 @@ export const DataService = {
       try {
         const orgs = await OrganizationModel.find({}).sort({ createdAt: -1 }).lean();
         const results: Organization[] = [];
+        const existingSlugs = new Set<string>();
+
         for (const o of orgs || []) {
+          existingSlugs.add(o.slug);
           let currentKey = o.apiKey;
           if (!currentKey || currentKey === 'zyn_live_api_key' || currentKey.length < 20) {
-            currentKey = generateApiKey('zyn_live');
-            OrganizationModel.updateOne(
+            currentKey = o.slug === 'travel-tribes' ? TRAVEL_TRIBES_API_KEY : generateApiKey('zyn_live');
+            OrganizationModel.collection.updateOne(
               { _id: o._id },
               { $set: { apiKey: currentKey, apiKeyCreatedAt: new Date().toISOString() } }
             ).catch((e) => console.error('Error auto-healing API key in DB:', e));
@@ -112,6 +171,15 @@ export const DataService = {
             modules: o.modules || [],
           } as unknown as Organization);
         }
+
+        // Auto-seed preconfigured clients (Travel Tribes) if not yet in MongoDB
+        for (const initOrg of initialOrgs) {
+          if (!existingSlugs.has(initOrg.slug)) {
+            OrganizationModel.create(initOrg).catch(() => {});
+            results.push(initOrg);
+          }
+        }
+
         return results;
       } catch (err) {
         console.error('Error fetching orgs from MongoDB:', err);
@@ -124,12 +192,23 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        const org = await OrganizationModel.findOne({ $or: [{ _id: id }, { slug: id }] } as any).lean();
+        let org: any = await OrganizationModel.findOne({ slug: id }).lean();
+        if (!org) {
+          try {
+            org = await OrganizationModel.findOne({ _id: id }).lean();
+          } catch {}
+        }
+        if (!org && mongoose.Types.ObjectId.isValid(id) && id.length === 24) {
+          try {
+            org = await OrganizationModel.collection.findOne({ _id: new mongoose.Types.ObjectId(id) });
+          } catch {}
+        }
+
         if (org) {
           let currentKey = org.apiKey;
           if (!currentKey || currentKey === 'zyn_live_api_key' || currentKey.length < 20) {
             currentKey = generateApiKey('zyn_live');
-            OrganizationModel.updateOne(
+            OrganizationModel.collection.updateOne(
               { _id: org._id },
               { $set: { apiKey: currentKey, apiKeyCreatedAt: new Date().toISOString() } }
             ).catch((e) => console.error('Error auto-healing API key in DB:', e));
@@ -141,8 +220,8 @@ export const DataService = {
             modules: org.modules || [],
           } as unknown as Organization;
         }
-      } catch {
-        // Fallback
+      } catch (err) {
+        console.error('Error fetching org by id from MongoDB:', err);
       }
     }
     const memOrg = mockOrgs.find((o) => o._id === id || o.slug === id) || null;
@@ -178,11 +257,37 @@ export const DataService = {
     const mongo = await connectToDatabase();
     if (mongo) {
       try {
-        const updated = await OrganizationModel.findOneAndUpdate(
-          { $or: [{ _id: orgId }, { slug: orgId }] } as any,
+        // 1. Try slug first (direct & clean)
+        let updated: any = await OrganizationModel.findOneAndUpdate(
+          { slug: orgId },
           { $set: update },
           { new: true }
         ).lean();
+
+        // 2. Try _id as string
+        if (!updated) {
+          try {
+            updated = await OrganizationModel.findOneAndUpdate(
+              { _id: orgId },
+              { $set: update },
+              { new: true }
+            ).lean();
+          } catch {}
+        }
+
+        // 3. Try ObjectId if valid 24-char hex
+        if (!updated && mongoose.Types.ObjectId.isValid(orgId) && orgId.length === 24) {
+          try {
+            const rawCol = OrganizationModel.collection;
+            const res: any = await rawCol.findOneAndUpdate(
+              { _id: new mongoose.Types.ObjectId(orgId) },
+              { $set: update },
+              { returnDocument: 'after' }
+            );
+            updated = res?.value || res;
+          } catch {}
+        }
+
         if (updated) {
           return { ...updated, _id: updated._id.toString() } as unknown as Organization;
         }

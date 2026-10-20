@@ -48,6 +48,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [isRegeneratingKey, setIsRegeneratingKey] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [codeType, setCodeType] = useState<'html' | 'js' | 'curl'>('html');
+  const [localApiKey, setLocalApiKey] = useState(currentOrg?.apiKey && currentOrg.apiKey !== 'zyn_live_api_key' ? currentOrg.apiKey : '');
 
   // In-modal live test state
   const [testName, setTestName] = useState('Rahul Test Lead');
@@ -62,16 +63,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     }
   }, [currentUser]);
 
-  if (!isOpen || !currentUser) return null;
-
-  const currentApiKey = currentOrg?.apiKey || '';
+  React.useEffect(() => {
+    if (currentOrg?.apiKey && currentOrg.apiKey !== 'zyn_live_api_key') {
+      setLocalApiKey(currentOrg.apiKey);
+    }
+  }, [currentOrg?.apiKey]);
 
   // Auto-generate genuine API key if missing from currentOrg
   React.useEffect(() => {
-    if (isOpen && currentOrg && (!currentOrg.apiKey || currentOrg.apiKey === 'zyn_live_api_key')) {
-      regenerateApiKey();
+    if (isOpen && currentOrg && (!currentOrg.apiKey || currentOrg.apiKey === 'zyn_live_api_key' || !localApiKey)) {
+      regenerateApiKey().then((newKey) => {
+        if (newKey) setLocalApiKey(newKey);
+      });
     }
-  }, [isOpen, currentOrg, regenerateApiKey]);
+  }, [isOpen, currentOrg, localApiKey, regenerateApiKey]);
+
+  if (!isOpen || !currentUser) return null;
+
+  const activeApiKey = localApiKey || currentOrg?.apiKey || '';
+  const currentApiKey = activeApiKey;
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   const apiEndpoint = `${baseUrl}/api/v1/capture-lead`;
@@ -104,7 +114,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
     setIsRegeneratingKey(true);
     try {
-      await regenerateApiKey();
+      const newKey = await regenerateApiKey();
+      if (newKey) {
+        setLocalApiKey(newKey);
+      }
       alert('New API Key successfully generated and saved to MongoDB Atlas!');
     } catch (e) {
       console.error('Error renewing key:', e);
@@ -115,7 +128,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   const handleTestApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentApiKey) {
+    if (!activeApiKey) {
       alert('Please wait for the live API key to load or click Regenerate Key.');
       return;
     }
@@ -299,7 +312,7 @@ curl -X POST "${apiEndpoint}" \\
             }`}
           >
             <KeyRound className="h-3.5 w-3.5 text-blue-200" />
-            <span>Zoho CRM API Key & Developer Space</span>
+            <span>{currentOrg?.name ? `${currentOrg.name} API Key & Webhook` : 'Live API Key & Webhook'}</span>
             <span className="flex h-2 w-2 relative">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -405,7 +418,7 @@ curl -X POST "${apiEndpoint}" \\
           </form>
         )}
 
-        {/* TAB 2: Zoho CRM API Key & Developer Space */}
+        {/* TAB 2: Dynamic Company API Key & Developer Space */}
         {activeTab === 'api_key' && (
           <div className="mt-5 space-y-5">
             {/* API Key Box */}
@@ -414,14 +427,14 @@ curl -X POST "${apiEndpoint}" \\
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-blue-900">
-                      Company Live API Key
+                      {currentOrg?.name ? `${currentOrg.name} Live API Key` : 'Company Live API Key'}
                     </span>
                     <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
                       Active
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-600 mt-0.5">
-                    Zoho CRM ki tarah, is API key ko client ki website par form me integrate karein leads direct receive karne ke liye.
+                    Zoho CRM ki tarah, {currentOrg?.name ? `"${currentOrg.name}"` : 'apne CRM'} ki is API key ko client ki website par form me integrate karein leads direct receive karne ke liye.
                   </p>
                 </div>
 
@@ -442,7 +455,10 @@ curl -X POST "${apiEndpoint}" \\
                   {currentApiKey ? (
                     showApiKey ? currentApiKey : currentApiKey.replace(/^(.{10})(.*)(.{4})$/, '$1••••••••••••••••$3')
                   ) : (
-                    <span className="text-slate-400 italic font-sans font-normal">Loading API Key from MongoDB...</span>
+                    <span className="flex items-center gap-1.5 text-slate-400 italic font-sans font-normal">
+                      <RefreshCw className="h-3 w-3 animate-spin text-blue-500" />
+                      Generating genuine API Key for {currentOrg?.name || 'Workspace'}...
+                    </span>
                   )}
                 </div>
 

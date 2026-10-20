@@ -344,7 +344,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const regenerateApiKey = async (): Promise<string | null> => {
     if (!currentOrg) return null;
     try {
-      const res = await fetch(`/api/organizations/${currentOrg._id}/regenerate-key`, {
+      const orgIdentifier = currentOrg.slug || currentOrg._id;
+      const res = await fetch(`/api/organizations/${orgIdentifier}/regenerate-key`, {
         method: 'POST',
       });
       const json = await res.json();
@@ -352,7 +353,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         const updatedOrg = json.data.organization;
         setCurrentOrg(updatedOrg);
         setOrganizations((prev) =>
-          prev.map((o) => (o._id === updatedOrg._id ? updatedOrg : o))
+          prev.map((o) => (o._id === updatedOrg._id || o.slug === updatedOrg.slug ? updatedOrg : o))
         );
         return json.data.apiKey;
       }
